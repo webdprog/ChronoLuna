@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChronoLuna — Event Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #1a1209;
+  --paper: #fdf6e9;
+  --paper2: #f5ead4;
+  --vermillion: #c0392b;
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --jade: #2e8b57;
+  --sky: #3a6ea5;
+  --muted: #8a7a60;
+  --card-bg: #fffdf7;
+  --shadow: 0 4px 32px rgba(26,18,9,0.13);
+  --radius: 18px;
+  --transition: 0.35s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --ink: #f0e6cc;
+  --paper: #18120a;
+  --paper2: #231a0e;
+  --card-bg: #211608;
+  --muted: #a89070;
+  --shadow: 0 4px 32px rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--paper); color: var(--ink); font-family: 'DM Sans', sans-serif; transition: background var(--transition), color var(--transition); overflow-x: hidden; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 28px 14px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { font-size: 28px; line-height: 1; }
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 900; color: var(--vermillion); letter-spacing: -0.5px; }
+.logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; display: block; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.icon-btn {
+  background: var(--paper2); border: 1.5px solid var(--gold); color: var(--ink);
+  border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  transition: var(--transition); flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--gold); color: #fff; }
+
+/* ── NEXT EVENT BANNER ── */
+#next-banner {
+  background: linear-gradient(135deg, var(--vermillion), #8b1a10);
+  color: #fff; padding: 12px 28px;
+  display: flex; align-items: center; gap: 14px;
+  font-size: 0.9rem; cursor: pointer;
+  border-bottom: 2px solid var(--gold);
+  transition: opacity 0.3s;
+}
+#next-banner .banner-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; display: block; }
+#next-banner .banner-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+#next-banner .banner-count { margin-left: auto; text-align: right; }
+#next-banner .banner-days { font-size: 2rem; font-weight: 900; line-height: 1; }
+#next-banner.hidden { display: none; }
+
+/* ── CAROUSEL ── */
+#carousel-section { padding: 28px 0 10px; }
+.section-title {
+  font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--muted);
+  letter-spacing: 1px; padding: 0 28px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--gold); opacity: 0.4; }
+
+.carousel-wrapper { position: relative; overflow: hidden; }
+.carousel-track {
+  display: flex; gap: 20px;
+  padding: 10px 28px 20px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+
+/* ── EVENT CARD ── */
+.event-card {
+  min-width: 280px; max-width: 300px; flex-shrink: 0;
+  scroll-snap-align: start;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--gold);
+  box-shadow: var(--shadow);
+  padding: 22px 20px 18px;
+  position: relative; overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+  cursor: pointer;
+}
+.event-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(26,18,9,0.18); }
+.event-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--cat-color, var(--gold));
+}
+.card-cat-icon { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+.card-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+.card-lunar { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; font-family: 'Noto Serif SC', serif; }
+.card-countdown {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.countdown-unit { text-align: center; background: var(--paper2); border-radius: 10px; padding: 8px 4px; }
+.countdown-num { font-size: 1.6rem; font-weight: 900; line-height: 1; color: var(--vermillion); display: block; }
+.countdown-label { font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.card-footer { display: flex; align-items: center; justify-content: space-between; }
+.card-date { font-size: 0.78rem; color: var(--muted); }
+.card-repeat { font-size: 0.7rem; background: var(--paper2); border-radius: 20px; padding: 3px 9px; color: var(--muted); }
+.card-actions { display: flex; gap: 6px; }
+.card-action-btn {
+  background: none; border: 1px solid var(--gold); border-radius: 50%;
+  width: 28px; height: 28px; cursor: pointer; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+  transition: var(--transition);
+}
+.card-action-btn:hover { background: var(--vermillion); border-color: var(--vermillion); color: #fff; }
+.card-celebrated { opacity: 0.55; }
+.card-celebrated::after {
+  content: '🎉 Today!'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-family: 'Playfair Display', serif; font-weight: 700;
+  background: rgba(192,57,43,0.12); color: var(--vermillion); border-radius: var(--radius);
+}
+.empty-carousel {
+  padding: 40px 28px; text-align: center; color: var(--muted);
+  font-size: 0.95rem; width: 100%;
+}
+
+/* ── ADD EVENT BUTTON ── */
+.fab {
+  position: fixed; bottom: 28px; right: 24px;
+  background: var(--vermillion); color: #fff;
+  border: none; border-radius: 50px; padding: 14px 22px;
+  font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  cursor: pointer; box-shadow: 0 6px 24px rgba(192,57,43,0.45);
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition); z-index: 200;
+}
+.fab:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 10px 32px rgba(192,57,43,0.55); }
+
+/* ── ALL EVENTS LIST ── */
+#list-section { padding: 10px 28px 120px; }
+.event-list-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card-bg); border-radius: 12px;
+  border: 1px solid var(--paper2);
+  padding: 14px 16px; margin-bottom: 10px;
+  cursor: pointer; transition: var(--transition);
+}
+.event-list-item:hover { border-color: var(--gold); transform: translateX(4px); }
+.list-icon { font-size: 1.6rem; flex-shrink: 0; }
+.list-info { flex: 1; min-width: 0; }
+.list-name { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-date { font-size: 0.75rem; color: var(--muted); }
+.list-days { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--vermillion); flex-shrink: 0; }
+.list-days.past { color: var(--muted); }
+
+/* ── MODAL ── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(26,18,9,0.6);
+  backdrop-filter: blur(4px); z-index: 300; display: flex;
+  align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--paper); border-radius: 24px 24px 0 0;
+  padding: 28px 24px 40px; width: 100%; max-width: 520px;
+  transform: translateY(60px); transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  max-height: 92vh; overflow-y: auto;
+}
+.overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 42px; height: 4px; background: var(--gold); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 22px; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+input, select, textarea {
+  width: 100%; padding: 11px 14px; border-radius: 10px;
+  border: 1.5px solid var(--paper2); background: var(--card-bg); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  transition: border-color 0.2s; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+textarea { resize: vertical; min-height: 70px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cat-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+}
+.cat-btn {
+  background: var(--paper2); border: 2px solid transparent; border-radius: 10px;
+  padding: 8px 4px; cursor: pointer; text-align: center; font-size: 1.3rem;
+  transition: var(--transition);
+}
+.cat-btn.selected { border-color: var(--gold); background: var(--card-bg); }
+.cat-btn span { display: block; font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+
+.lunar-display {
+  background: var(--paper2); border-radius: 10px; padding: 10px 14px;
+  font-family: 'Noto Serif SC', serif; font-size: 0.88rem; color: var(--jade);
+  min-height: 36px; display: flex; align-items: center;
+}
+
+/* Repeat type toggle */
+.toggle-group { display: flex; gap: 0; border: 1.5px solid var(--gold); border-radius: 10px; overflow: hidden; }
+.toggle-btn {
+  flex: 1; padding: 9px 4px; border: none; background: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--muted);
+  transition: var(--transition); border-right: 1px solid var(--gold);
+}
+.toggle-btn:last-child { border-right: none; }
+.toggle-btn.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+
+/* Notification checkboxes */
+.notif-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.notif-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--paper2); border: 1.5px solid transparent;
+  border-radius: 20px; padding: 5px 12px; cursor: pointer; font-size: 0.8rem;
+  transition: var(--transition); user-select: none;
+}
+.notif-chip.selected { border-color: var(--jade); color: var(--jade); }
+.notif-chip input { display: none; }
+
+.btn-primary {
+  width: 100%; padding: 14px; background: var(--vermillion); color: #fff;
+  border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 600; cursor: pointer; transition: var(--transition);
+  margin-top: 8px;
+}
+.btn-primary:hover { background: #a93226; }
+.btn-secondary {
+  width: 100%; padding: 12px; background: none; color: var(--muted);
+  border: 1.5px solid var(--paper2); border-radius: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer;
+  transition: var(--transition); margin-top: 6px;
+}
+.btn-secondary:hover { border-color: var(--vermillion); color: var(--vermillion); }
+
+/* ── CONFETTI ── */
+.confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 500; }
+.confetti-piece {
+  position: absolute; width: 10px; height: 10px; border-radius: 2px;
+  animation: confetti-fall 3s ease-in forwards;
+  top: -20px;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── FILTER TABS ── */
+.filter-tabs { display: flex; gap: 8px; padding: 0 28px 16px; overflow-x: auto; scrollbar-width: none; }
+.filter-tabs::-webkit-scrollbar { display: none; }
+.filter-tab {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--paper2); background: none; cursor: pointer;
+  font-size: 0.8rem; color: var(--muted); transition: var(--transition);
+}
+.filter-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* ── DETAIL MODAL ── */
+.detail-card-big {
+  background: var(--paper2); border-radius: 16px; padding: 20px;
+  margin-bottom: 18px; text-align: center;
+}
+.detail-event-name { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; margin: 8px 0 4px; }
+.detail-countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+.detail-unit { background: var(--card-bg); border-radius: 12px; padding: 12px 6px; text-align: center; }
+.detail-num { font-size: 2.2rem; font-weight: 900; color: var(--vermillion); line-height: 1; display: block; }
+.detail-label { font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.share-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 20px;
+  border: 1.5px solid var(--gold); background: none;
+  color: var(--ink); cursor: pointer; font-size: 0.85rem;
+  transition: var(--transition); margin: 4px;
+}
+.share-btn:hover { background: var(--gold); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper); padding: 10px 20px;
+  border-radius: 20px; font-size: 0.85rem; z-index: 600;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── SETTINGS PANEL ── */
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--paper2); }
+.settings-label { font-size: 0.9rem; }
+.settings-sub { font-size: 0.75rem; color: var(--muted); }
+.toggle-switch {
+  position: relative; width: 44px; height: 24px;
+  background: var(--paper2); border-radius: 12px; cursor: pointer; transition: background 0.3s;
+  border: 1px solid var(--gold);
+}
+.toggle-switch.on { background: var(--jade); }
+.toggle-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  transition: left 0.3s;
+}
+.toggle-switch.on::after { left: 23px; }
+
+/* Import/export */
+.export-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px; border-radius: 10px;
+  border: 1.5px solid var(--gold); background: none;
+  color: var(--ink); cursor: pointer; font-size: 0.88rem;
+  transition: var(--transition); width: 100%; margin-bottom: 8px;
+}
+.export-btn:hover { background: var(--gold); }
+
+@media (min-width: 640px) {
+  .modal { border-radius: 24px; margin: auto; margin-bottom: 24px; }
+  .overlay { align-items: center; }
+  .event-card { min-width: 300px; }
+}
+
+/* ── SUPABASE CONNECT MODAL ── */
+#supabase-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: var(--paper);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none; transition: opacity 0.4s;
+}
+#supabase-overlay.open { opacity: 1; pointer-events: all; }
+.sb-modal-inner {
+  width: 100%; max-width: 440px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--gold);
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.sb-logo { text-align: center; margin-bottom: 24px; }
+.sb-logo-icon { font-size: 3rem; display: block; margin-bottom: 8px; }
+.sb-logo-title {
+  font-family: 'Playfair Display', serif; font-size: 1.6rem;
+  font-weight: 900; color: var(--vermillion);
+}
+.sb-logo-sub { font-size: 0.78rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+.sb-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 20px 0 18px; color: var(--muted); font-size: 0.78rem;
+}
+.sb-divider::before, .sb-divider::after { content: ''; flex: 1; height: 1px; background: var(--gold); opacity: 0.4; }
+.sb-info-box {
+  background: var(--paper2); border-radius: 12px; padding: 12px 14px;
+  font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px;
+}
+.sb-info-box a { color: var(--sky); text-decoration: none; }
+.sb-info-box a:hover { text-decoration: underline; }
+.sb-input-wrap { position: relative; margin-bottom: 14px; }
+.sb-input-wrap label { display: block; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.sb-input-wrap input {
+  width: 100%; padding: 11px 40px 11px 14px;
+  border-radius: 10px; border: 1.5px solid var(--paper2);
+  background: var(--paper); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  transition: border-color 0.2s; outline: none;
+}
+.sb-input-wrap input:focus { border-color: var(--gold); }
+.sb-eye-btn {
+  position: absolute; right: 10px; bottom: 10px;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--muted); padding: 2px;
+}
+.sb-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.82rem; padding: 10px 14px;
+  border-radius: 10px; margin-bottom: 14px;
+  display: none;
+}
+.sb-status.success { background: rgba(46,139,87,0.12); color: var(--jade); display: flex; }
+.sb-status.error { background: rgba(192,57,43,0.1); color: var(--vermillion); display: flex; }
+.sb-status.loading { background: var(--paper2); color: var(--muted); display: flex; }
+.sb-status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: currentColor;
+}
+.sb-status.loading .sb-status-dot { animation: pulse-dot 1s infinite; }
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+.sb-btn-connect {
+  width: 100%; padding: 13px; background: var(--vermillion); color: #fff;
+  border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 600; cursor: pointer;
+  transition: var(--transition); margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.sb-btn-connect:hover { background: #a93226; }
+.sb-btn-connect:disabled { opacity: 0.6; cursor: not-allowed; }
+.sb-btn-local {
+  width: 100%; padding: 11px; background: none; color: var(--muted);
+  border: 1.5px solid var(--paper2); border-radius: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem; cursor: pointer;
+  transition: var(--transition);
+}
+.sb-btn-local:hover { border-color: var(--gold); color: var(--ink); }
+.sb-privacy { text-align: center; font-size: 0.72rem; color: var(--muted); margin-top: 14px; line-height: 1.5; }
+
+/* ── SUPABASE STATUS INDICATOR IN HEADER ── */
+.sb-indicator {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 20px;
+  font-size: 0.72rem; letter-spacing: 0.5px;
+  border: 1.5px solid var(--paper2);
+  cursor: pointer; transition: var(--transition);
+  white-space: nowrap;
+}
+.sb-indicator:hover { border-color: var(--gold); }
+.sb-indicator .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.sb-indicator.connected .dot { background: var(--jade); }
+.sb-indicator.local .dot { background: var(--gold); }
+.sb-indicator.connected { border-color: rgba(46,139,87,0.3); }
+
+/* ── SETTINGS SUPABASE SECTION ── */
+.sb-settings-card {
+  background: var(--paper2); border-radius: 14px; padding: 16px;
+  margin-top: 16px;
+}
+.sb-settings-url {
+  font-size: 0.78rem; color: var(--muted); word-break: break-all;
+  margin: 6px 0 12px; font-family: monospace;
+}
+.sb-reconnect-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid var(--gold); background: none;
+  color: var(--ink); cursor: pointer; font-size: 0.82rem;
+  transition: var(--transition); margin-right: 8px; margin-top: 4px;
+}
+.sb-reconnect-btn:hover { background: var(--gold); }
+.sb-disconnect-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid rgba(192,57,43,0.4); background: none;
+  color: var(--vermillion); cursor: pointer; font-size: 0.82rem;
+  transition: var(--transition); margin-top: 4px;
+}
+.sb-disconnect-btn:hover { background: rgba(192,57,43,0.1); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-mark">🏮</span>
+    <div>
+      <span class="logo-text">ChronoLuna</span>
+      <span class="logo-sub">Event Countdown</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="sb-indicator local" id="sb-indicator" title="Supabase connection status">
+      <span class="dot"></span>
+      <span id="sb-indicator-label">Local</span>
+    </div>
+    <button class="icon-btn" id="theme-btn" title="Toggle dark mode">🌙</button>
+    <button class="icon-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button class="icon-btn" id="import-btn" title="Import events">📥</button>
+  </div>
+</header>
+
+<div id="next-banner" class="hidden">
+  <div>
+    <span class="banner-label">Next Up</span>
+    <span class="banner-name" id="banner-name">—</span>
+  </div>
+  <div class="banner-count">
+    <span class="banner-days" id="banner-days">0</span>
+    <span style="font-size:0.7rem;opacity:.8"> days</span>
+  </div>
+</div>
+
+<div id="carousel-section">
+  <div class="section-title">✦ Upcoming Events</div>
+  <div class="carousel-wrapper">
+    <div class="carousel-track" id="carousel-track"></div>
+  </div>
+</div>
+
+<div id="list-section">
+  <div class="section-title">✦ All Events</div>
+  <div class="filter-tabs" id="filter-tabs">
+    <button class="filter-tab active" data-filter="all">All</button>
+    <button class="filter-tab" data-filter="🎂">🎂 Birthday</button>
+    <button class="filter-tab" data-filter="💍">💍 Anniversary</button>
+    <button class="filter-tab" data-filter="🏮">🏮 Festival</button>
+    <button class="filter-tab" data-filter="🎯">🎯 Deadline</button>
+    <button class="filter-tab" data-filter="✈️">✈️ Travel</button>
+    <button class="filter-tab" data-filter="⭐">⭐ Other</button>
+  </div>
+  <div id="event-list"></div>
+</div>
+
+<button class="fab" id="add-btn">＋ Add Event</button>
+<div class="toast" id="toast"></div>
+
+<!-- ═══ ADD EVENT MODAL ═══ -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title-text">New Event</div>
+
+    <div class="form-group">
+      <label>Event Name</label>
+      <input type="text" id="ev-name" placeholder="e.g. Chinese New Year 2026"/>
+    </div>
+
+    <div class="form-group">
+      <label>Category</label>
+      <div class="cat-grid" id="cat-grid">
+        <button class="cat-btn selected" data-cat="🎂" data-color="#e74c3c">🎂<span>Birthday</span></button>
+        <button class="cat-btn" data-cat="💍" data-color="#9b59b6">💍<span>Anniv.</span></button>
+        <button class="cat-btn" data-cat="🏮" data-color="#c0392b">🏮<span>Festival</span></button>
+        <button class="cat-btn" data-cat="🎯" data-color="#e67e22">🎯<span>Deadline</span></button>
+        <button class="cat-btn" data-cat="✈️" data-color="#3a6ea5">✈️<span>Travel</span></button>
+        <button class="cat-btn" data-cat="🎓" data-color="#27ae60">🎓<span>Academic</span></button>
+        <button class="cat-btn" data-cat="💼" data-color="#7f8c8d">💼<span>Work</span></button>
+        <button class="cat-btn" data-cat="❤️" data-color="#e91e63">❤️<span>Love</span></button>
+        <button class="cat-btn" data-cat="🏆" data-color="#f39c12">🏆<span>Goal</span></button>
+        <button class="cat-btn" data-cat="⭐" data-color="#2c3e50">⭐<span>Other</span></button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Calendar Type</label>
+        <select id="ev-cal-type">
+          <option value="gregorian">Gregorian (Standard)</option>
+          <option value="chinese">Chinese Lunar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="ev-date"/>
+      </div>
+    </div>
+
+    <div class="form-group" id="lunar-info-row" style="display:none">
+      <label>Lunar Date</label>
+      <div class="lunar-display" id="lunar-display">Select a Gregorian date to see lunar equivalent</div>
+    </div>
+
+    <div class="form-group">
+      <label>Repeat</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active" data-repeat="none">Once</button>
+        <button class="toggle-btn" data-repeat="daily">Daily</button>
+        <button class="toggle-btn" data-repeat="monthly">Monthly</button>
+        <button class="toggle-btn" data-repeat="yearly">Yearly</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Reminders</label>
+      <div class="notif-grid">
+        <label class="notif-chip" data-days="0"><input type="checkbox" value="0"> On the day</label>
+        <label class="notif-chip" data-days="1"><input type="checkbox" value="1"> 1 day before</label>
+        <label class="notif-chip" data-days="7"><input type="checkbox" value="7"> 1 week before</label>
+        <label class="notif-chip" data-days="30"><input type="checkbox" value="30"> 1 month before</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="ev-notes" placeholder="Add a personal message, gift ideas, or reminders…"></textarea>
+    </div>
+
+    <button class="btn-primary" id="save-btn">Save Event</button>
+    <button class="btn-secondary" id="delete-btn" style="display:none;color:#c0392b;border-color:#c0392b">🗑 Delete Event</button>
+    <button class="btn-secondary" id="cancel-btn">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══ DETAIL MODAL ═══ -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="detail-card-big" id="detail-card-big">
+      <div id="detail-icon" style="font-size:2.5rem"></div>
+      <div class="detail-event-name" id="detail-name"></div>
+      <div style="color:var(--muted);font-size:.8rem" id="detail-lunar-label"></div>
+      <div class="detail-countdown-grid" id="detail-countdown-grid"></div>
+      <div style="color:var(--muted);font-size:.8rem" id="detail-date-str"></div>
+    </div>
+    <div id="detail-notes-section" style="margin-bottom:16px;display:none">
+      <label style="display:block;font-size:.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</label>
+      <div id="detail-notes" style="background:var(--paper2);border-radius:10px;padding:12px;font-size:.9rem;line-height:1.6"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <button class="share-btn" id="share-link-btn">🔗 Copy Link</button>
+      <button class="share-btn" id="share-img-btn">🖼 Share Card</button>
+      <button class="share-btn" id="edit-from-detail-btn">✏️ Edit</button>
+    </div>
+    <button class="btn-secondary" id="detail-close-btn">Close</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS MODAL ═══ -->
+<div class="overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Settings</div>
+    <div class="settings-row">
+      <div><div class="settings-label">Dark Mode</div></div>
+      <div class="toggle-switch" id="dark-toggle"></div>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Browser Notifications</div>
+        <div class="settings-sub">Get reminded before events</div>
+      </div>
+      <div class="toggle-switch" id="notif-toggle"></div>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Show Lunar Date</div>
+        <div class="settings-sub">Display Chinese calendar on cards</div>
+      </div>
+      <div class="toggle-switch on" id="lunar-toggle"></div>
+    </div>
+    <div style="margin-top:20px">
+      <div class="settings-label" style="margin-bottom:12px;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Import / Export</div>
+      <button class="export-btn" id="export-json-btn">📤 Export Events (JSON)</button>
+      <button class="export-btn" id="export-ics-btn">📅 Export as .ics Calendar</button>
+      <label class="export-btn" style="cursor:pointer">
+        📥 Import Events (JSON)
+        <input type="file" id="import-file" accept=".json" style="display:none"/>
+      </label>
+    </div>
+    <div style="margin-top:16px">
+      <div class="settings-label" style="margin-bottom:12px;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Chinese Holidays</div>
+      <button class="export-btn" id="import-cn-holidays">🏮 Import Chinese Festivals 2026</button>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="settings-label" style="margin-bottom:8px;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Supabase Connection</div>
+      <div class="sb-settings-card" id="sb-settings-card">
+        <div style="font-size:.85rem;font-weight:500" id="sb-settings-status-label">Not connected</div>
+        <div class="sb-settings-url" id="sb-settings-url"></div>
+        <button class="sb-reconnect-btn" id="sb-reconfigure-btn">⚙️ Configure</button>
+        <button class="sb-disconnect-btn" id="sb-disconnect-btn" style="display:none">✕ Disconnect</button>
+      </div>
+    </div>
+
+    <button class="btn-secondary" id="settings-close-btn" style="margin-top:12px">Close</button>
+  </div>
+</div>
+
+<div class="confetti-container" id="confetti-container"></div>
+
+<!-- ═══ SUPABASE CONNECT MODAL ═══ -->
+<div id="supabase-overlay">
+  <div class="sb-modal-inner">
+    <div class="sb-logo">
+      <span class="sb-logo-icon">🏮</span>
+      <div class="sb-logo-title">ChronoLuna</div>
+      <div class="sb-logo-sub">Event Countdown</div>
+    </div>
+
+    <div class="sb-info-box">
+      Connect your <strong>Supabase</strong> project to sync events across devices. You'll need your Project URL and anon/public API key from the
+      <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a>
+      → Project Settings → API.
+    </div>
+
+    <div class="sb-divider">Connect to Supabase</div>
+
+    <div class="sb-input-wrap">
+      <label>Project URL</label>
+      <input type="url" id="sb-url-input" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div class="sb-input-wrap">
+      <label>Anon / Public Key</label>
+      <input type="password" id="sb-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…" autocomplete="off" spellcheck="false"/>
+      <button class="sb-eye-btn" id="sb-eye-btn" title="Show/hide key">👁</button>
+    </div>
+
+    <div class="sb-status" id="sb-status">
+      <div class="sb-status-dot"></div>
+      <span id="sb-status-msg"></span>
+    </div>
+
+    <button class="sb-btn-connect" id="sb-connect-btn">
+      <span id="sb-connect-label">🔗 Connect & Sync</span>
+    </button>
+    <button class="sb-btn-local" id="sb-local-btn">Continue without Supabase (local only)</button>
+
+    <div class="sb-privacy">
+      🔒 Your credentials are stored only in this browser's localStorage.<br/>
+      The anon key is safe to use client-side when Row Level Security is enabled.
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CHINESE LUNAR CALENDAR ENGINE
+   Based on Gregorian ↔ Lunar conversion algorithm
+   ══════════════════════════════════════════════════════ */
+const LUNAR = {
+  lunarInfo: [
+    0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+    0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+    0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+    0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+    0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+    0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+    0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+    0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+    0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+    0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06aa0,0x0a6b6,0x056a0,0x02b40,0x0aab0,
+    0x0aaaa,0x0a950,0x0b4b0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,
+    0x0f92f,0x0e950,0x06c20,0x0ada0,0x0ab60
+  ],
+  monthNames: ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'],
+  dayNames: ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+    '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+    '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'],
+  zodiac: ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'],
+
+  leapMonth(y) { return this.lunarInfo[y-1900] & 0xf; },
+  leapDays(y) {
+    if (this.leapMonth(y)) return (this.lunarInfo[y-1900] & 0x10000) ? 30 : 29;
+    return 0;
+  },
+  monthDays(y, m) { return (this.lunarInfo[y-1900] & (0x10000>>m)) ? 30 : 29; },
+  yearDays(y) {
+    let i, sum = 348;
+    for (i = 0x8000; i > 0x8; i >>= 1) if (this.lunarInfo[y-1900] & i) sum += 1;
+    return sum + this.leapDays(y);
+  },
+
+  solar2lunar(y, m, d) {
+    let baseDate = new Date(1900,0,31);
+    let target = new Date(y, m-1, d);
+    let offset = Math.round((target-baseDate)/86400000);
+    let i, leap=0, temp=0;
+    let lunarYear, lunarMonth, lunarDay, isLeap=false;
+    for (i=1900; i<2100 && offset>0; i++) {
+      temp = this.yearDays(i);
+      offset -= temp;
+    }
+    if (offset < 0) { offset += temp; i--; }
+    lunarYear = i;
+    let leapM = this.leapMonth(i);
+    for (i=1; i<=12 && offset>0; i++) {
+      if (leapM>0 && i===(leapM+1) && !isLeap) {
+        --i; isLeap = true; temp = this.leapDays(lunarYear);
+      } else {
+        temp = this.monthDays(lunarYear, i);
+      }
+      if (isLeap && i===(leapM+1)) isLeap = false;
+      offset -= temp;
+    }
+    if (offset===0 && leapM>0 && i===leapM+1) {
+      if (isLeap) isLeap = false; else { isLeap = true; --i; }
+    }
+    if (offset < 0) { offset += temp; --i; }
+    lunarMonth = i;
+    lunarDay = offset + 1;
+    return {
+      lYear: lunarYear, lMonth: lunarMonth, lDay: lunarDay,
+      isLeap, zodiac: this.zodiac[(lunarYear-4)%12],
+      monthName: (isLeap ? '闰' : '') + this.monthNames[lunarMonth-1],
+      dayName: this.dayNames[lunarDay-1]
+    };
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   APP STATE
+   ══════════════════════════════════════════════════════ */
+let events = JSON.parse(localStorage.getItem('cl_events') || '[]');
+let settings = JSON.parse(localStorage.getItem('cl_settings') || '{"dark":false,"notifications":false,"showLunar":true}');
+let currentFilter = 'all';
+let editingId = null;
+let detailId = null;
+let selectedCat = '🎂';
+let selectedRepeat = 'none';
+let selectedNotifs = new Set();
+
+function saveEvents() { localStorage.setItem('cl_events', JSON.stringify(events)); }
+function saveSettings() { localStorage.setItem('cl_settings', JSON.stringify(settings)); }
+
+/* ══════════════════════════════════════════════════════
+   COUNTDOWN ENGINE
+   ══════════════════════════════════════════════════════ */
+function getNextOccurrence(ev) {
+  let target = new Date(ev.date + 'T00:00:00');
+  const now = new Date(); now.setHours(0,0,0,0);
+  if (ev.repeat === 'yearly') {
+    target.setFullYear(now.getFullYear());
+    if (target < now) target.setFullYear(now.getFullYear()+1);
+  } else if (ev.repeat === 'monthly') {
+    target.setFullYear(now.getFullYear()); target.setMonth(now.getMonth());
+    if (target < now) { target.setMonth(target.getMonth()+1); }
+  } else if (ev.repeat === 'daily') {
+    target = new Date(now);
+  }
+  return target;
+}
+
+function daysUntil(ev) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const t = getNextOccurrence(ev);
+  return Math.round((t-now)/86400000);
+}
+
+function formatCountdown(days) {
+  const d = Math.abs(days);
+  return { days: d, hours: 0, minutes: 0, seconds: 0 };
+}
+
+function liveCountdown(ev) {
+  const now = new Date();
+  const t = getNextOccurrence(ev);
+  t.setHours(0,0,0,0);
+  let diff = t - now;
+  if (diff < 0) diff = 0;
+  const days = Math.floor(diff/86400000);
+  diff %= 86400000;
+  const hours = Math.floor(diff/3600000);
+  diff %= 3600000;
+  const minutes = Math.floor(diff/60000);
+  const seconds = Math.floor((diff%60000)/1000);
+  return { days, hours, minutes, seconds };
+}
+
+function lunarLabel(dateStr) {
+  try {
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const l = LUNAR.solar2lunar(y,m,d);
+    return `农历 ${l.zodiac}年 ${l.monthName}${l.dayName}`;
+  } catch(e) { return ''; }
+}
+
+const CAT_COLORS = {
+  '🎂':'#e74c3c','💍':'#9b59b6','🏮':'#c0392b','🎯':'#e67e22',
+  '✈️':'#3a6ea5','🎓':'#27ae60','💼':'#7f8c8d','❤️':'#e91e63',
+  '🏆':'#f39c12','⭐':'#2c3e50'
+};
+
+/* ══════════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════════ */
+function getUpcoming() {
+  return events
+    .map(ev => ({ ev, days: daysUntil(ev) }))
+    .filter(x => x.days >= 0)
+    .sort((a,b)=>a.days-b.days);
+}
+
+function renderCarousel() {
+  const track = document.getElementById('carousel-track');
+  const upcoming = getUpcoming().slice(0, 20);
+  if (!upcoming.length) {
+    track.innerHTML = '<div class="empty-carousel">No upcoming events. Add one! 🏮</div>';
+    document.getElementById('next-banner').classList.add('hidden');
+    return;
+  }
+  // Banner
+  const first = upcoming[0];
+  document.getElementById('banner-name').textContent = first.ev.name;
+  document.getElementById('banner-days').textContent = first.days;
+  document.getElementById('next-banner').classList.toggle('hidden', false);
+
+  track.innerHTML = upcoming.map(({ev, days}) => {
+    const cd = liveCountdown(ev);
+    const color = CAT_COLORS[ev.category] || '#c9a84c';
+    const isToday = days === 0;
+    const lunar = settings.showLunar ? `<div class="card-lunar">${lunarLabel(ev.date)}</div>` : '';
+    return `
+    <div class="event-card${isToday?' card-celebrated':''}" style="--cat-color:${color}" data-id="${ev.id}" onclick="openDetail('${ev.id}')">
+      <span class="card-cat-icon">${ev.category}</span>
+      <div class="card-name">${ev.name}</div>
+      ${lunar}
+      <div class="card-countdown">
+        <div class="countdown-unit"><span class="countdown-num">${cd.days}</span><span class="countdown-label">Days</span></div>
+        <div class="countdown-unit"><span class="countdown-num">${String(cd.hours).padStart(2,'0')}</span><span class="countdown-label">Hrs</span></div>
+        <div class="countdown-unit"><span class="countdown-num">${String(cd.minutes).padStart(2,'0')}</span><span class="countdown-label">Min</span></div>
+        <div class="countdown-unit"><span class="countdown-num">${String(cd.seconds).padStart(2,'0')}</span><span class="countdown-label">Sec</span></div>
+      </div>
+      <div class="card-footer">
+        <span class="card-date">${formatDate(ev.date)}</span>
+        <div class="card-actions">
+          <button class="card-action-btn" onclick="event.stopPropagation();openEdit('${ev.id}')">✏️</button>
+        </div>
+      </div>
+      ${ev.repeat !== 'none' ? `<div class="card-repeat" style="position:absolute;top:12px;right:12px;font-size:.6rem">🔄 ${ev.repeat}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderList() {
+  const list = document.getElementById('event-list');
+  let filtered = events;
+  if (currentFilter !== 'all') filtered = events.filter(e => e.category === currentFilter);
+  const sorted = filtered
+    .map(ev => ({ ev, days: daysUntil(ev) }))
+    .sort((a,b) => {
+      if (a.days >= 0 && b.days >= 0) return a.days - b.days;
+      if (a.days < 0 && b.days < 0) return b.days - a.days;
+      return a.days >= 0 ? -1 : 1;
+    });
+  if (!sorted.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:.9rem">No events in this category</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(({ev, days}) => `
+    <div class="event-list-item" onclick="openDetail('${ev.id}')">
+      <div class="list-icon">${ev.category}</div>
+      <div class="list-info">
+        <div class="list-name">${ev.name}</div>
+        <div class="list-date">${formatDate(ev.date)}${ev.repeat !== 'none' ? ' · 🔄 '+ev.repeat : ''}</div>
+      </div>
+      <div class="list-days ${days<0?'past':''}">${days===0?'Today!':days>0?days+'d':Math.abs(days)+'d ago'}</div>
+    </div>`).join('');
+}
+
+function formatDate(str) {
+  try {
+    const [y,m,d] = str.split('-');
+    return new Date(y,m-1,d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  } catch { return str; }
+}
+
+function renderAll() { renderCarousel(); renderList(); }
+
+/* ══════════════════════════════════════════════════════
+   LIVE TICK
+   ══════════════════════════════════════════════════════ */
+setInterval(() => {
+  document.querySelectorAll('.event-card').forEach(card => {
+    const id = card.dataset.id;
+    const ev = events.find(e => e.id === id);
+    if (!ev) return;
+    const cd = liveCountdown(ev);
+    const nums = card.querySelectorAll('.countdown-num');
+    if (nums[0]) nums[0].textContent = cd.days;
+    if (nums[1]) nums[1].textContent = String(cd.hours).padStart(2,'0');
+    if (nums[2]) nums[2].textContent = String(cd.minutes).padStart(2,'0');
+    if (nums[3]) nums[3].textContent = String(cd.seconds).padStart(2,'0');
+  });
+  // Update detail modal if open
+  if (detailId) updateDetailCountdown();
+  // Update banner
+  const upcoming = getUpcoming();
+  if (upcoming.length) {
+    document.getElementById('banner-days').textContent = upcoming[0].days;
+  }
+}, 1000);
+
+/* ══════════════════════════════════════════════════════
+   MODALS
+   ══════════════════════════════════════════════════════ */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openAdd() {
+  editingId = null;
+  document.getElementById('modal-title-text').textContent = 'New Event';
+  document.getElementById('ev-name').value = '';
+  document.getElementById('ev-date').value = '';
+  document.getElementById('ev-notes').value = '';
+  document.getElementById('lunar-display').textContent = 'Select a date to see lunar equivalent';
+  document.getElementById('lunar-info-row').style.display = 'block';
+  document.getElementById('delete-btn').style.display = 'none';
+  selectedCat = '🎂'; selectedRepeat = 'none'; selectedNotifs = new Set();
+  updateCatUI(); updateRepeatUI(); updateNotifUI();
+  openModal('add-overlay');
+}
+
+function openEdit(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  closeModal('detail-overlay');
+  editingId = id;
+  document.getElementById('modal-title-text').textContent = 'Edit Event';
+  document.getElementById('ev-name').value = ev.name;
+  document.getElementById('ev-date').value = ev.date;
+  document.getElementById('ev-notes').value = ev.notes || '';
+  document.getElementById('ev-cal-type').value = ev.calType || 'gregorian';
+  document.getElementById('lunar-info-row').style.display = 'block';
+  document.getElementById('delete-btn').style.display = 'block';
+  selectedCat = ev.category; selectedRepeat = ev.repeat;
+  selectedNotifs = new Set(ev.notifs || []);
+  updateCatUI(); updateRepeatUI(); updateNotifUI();
+  updateLunarDisplay(ev.date);
+  openModal('add-overlay');
+}
+
+function openDetail(id) {
+  detailId = id;
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  document.getElementById('detail-icon').textContent = ev.category;
+  document.getElementById('detail-name').textContent = ev.name;
+  document.getElementById('detail-lunar-label').textContent = settings.showLunar ? lunarLabel(ev.date) : '';
+  document.getElementById('detail-date-str').textContent = formatDate(ev.date) + (ev.repeat !== 'none' ? ' · Repeats '+ev.repeat : '');
+  const notesSection = document.getElementById('detail-notes-section');
+  if (ev.notes) {
+    document.getElementById('detail-notes').textContent = ev.notes;
+    notesSection.style.display = 'block';
+  } else { notesSection.style.display = 'none'; }
+  updateDetailCountdown();
+  if (daysUntil(ev) === 0) launchConfetti();
+  openModal('detail-overlay');
+}
+
+function updateDetailCountdown() {
+  const ev = events.find(e => e.id === detailId);
+  if (!ev) return;
+  const cd = liveCountdown(ev);
+  document.getElementById('detail-countdown-grid').innerHTML = `
+    <div class="detail-unit"><span class="detail-num">${cd.days}</span><span class="detail-label">Days</span></div>
+    <div class="detail-unit"><span class="detail-num">${String(cd.hours).padStart(2,'0')}</span><span class="detail-label">Hours</span></div>
+    <div class="detail-unit"><span class="detail-num">${String(cd.minutes).padStart(2,'0')}</span><span class="detail-label">Minutes</span></div>
+    <div class="detail-unit"><span class="detail-num">${String(cd.seconds).padStart(2,'0')}</span><span class="detail-label">Seconds</span></div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   FORM HELPERS
+   ══════════════════════════════════════════════════════ */
+function updateCatUI() {
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.cat === selectedCat);
+  });
+}
+function updateRepeatUI() {
+  document.querySelectorAll('.toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.repeat === selectedRepeat);
+  });
+}
+function updateNotifUI() {
+  document.querySelectorAll('.notif-chip').forEach(chip => {
+    const v = chip.querySelector('input').value;
+    chip.classList.toggle('selected', selectedNotifs.has(v));
+  });
+}
+
+function updateLunarDisplay(dateStr) {
+  if (!dateStr) return;
+  try {
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const l = LUNAR.solar2lunar(y,m,d);
+    document.getElementById('lunar-display').textContent =
+      `农历 ${l.zodiac}年 ${l.monthName}${l.dayName} (${l.lYear}年${l.lMonth}月${l.lDay}日)`;
+  } catch(e) {
+    document.getElementById('lunar-display').textContent = 'Could not convert date';
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SAVE / DELETE
+   ══════════════════════════════════════════════════════ */
+function saveEvent() {
+  const name = document.getElementById('ev-name').value.trim();
+  const date = document.getElementById('ev-date').value;
+  const notes = document.getElementById('ev-notes').value.trim();
+  const calType = document.getElementById('ev-cal-type').value;
+  if (!name || !date) { showToast('Please enter a name and date.'); return; }
+  const ev = {
+    id: editingId || 'ev_'+Date.now(),
+    name, date, notes, calType,
+    category: selectedCat,
+    repeat: selectedRepeat,
+    notifs: [...selectedNotifs],
+    color: CAT_COLORS[selectedCat] || '#c9a84c'
+  };
+  if (editingId) {
+    events = events.map(e => e.id === editingId ? ev : e);
+  } else {
+    events.push(ev);
+  }
+  saveEvents();
+  closeModal('add-overlay');
+  renderAll();
+  showToast(editingId ? 'Event updated!' : 'Event added! 🎉');
+  scheduleNotifications(ev);
+}
+
+function deleteEvent() {
+  if (!editingId) return;
+  if (!confirm('Delete this event?')) return;
+  events = events.filter(e => e.id !== editingId);
+  saveEvents();
+  closeModal('add-overlay');
+  renderAll();
+  showToast('Event deleted.');
+}
+
+/* ══════════════════════════════════════════════════════
+   NOTIFICATIONS
+   ══════════════════════════════════════════════════════ */
+function scheduleNotifications(ev) {
+  if (!settings.notifications || !ev.notifs.length) return;
+  if (!('Notification' in window)) return;
+  Notification.requestPermission().then(perm => {
+    if (perm !== 'granted') return;
+    ev.notifs.forEach(daysStr => {
+      const d = parseInt(daysStr);
+      const target = getNextOccurrence(ev);
+      target.setDate(target.getDate() - d);
+      const now = new Date();
+      const delay = target - now;
+      if (delay > 0) {
+        setTimeout(() => {
+          new Notification('ChronoLuna 🏮', {
+            body: d === 0 ? `${ev.name} is today!` : `${ev.name} is in ${d} day${d>1?'s':''}!`,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="28" font-size="28">🏮</text></svg>'
+          });
+        }, delay);
+      }
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   SHARE
+   ══════════════════════════════════════════════════════ */
+function shareLink(id) {
+  const url = `${location.href}#event=${id}`;
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard!'));
+}
+
+/* ══════════════════════════════════════════════════════
+   CONFETTI
+   ══════════════════════════════════════════════════════ */
+function launchConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#c0392b','#c9a84c','#27ae60','#3a6ea5','#9b59b6','#f39c12'];
+  container.innerHTML = '';
+  for (let i=0; i<80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px; height:${6+Math.random()*8}px;
+      animation-delay:${Math.random()*2}s;
+      animation-duration:${2+Math.random()*2}s;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+    `;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = '', 5000);
+}
+
+/* ══════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════════════════════════
+   THEME
+   ══════════════════════════════════════════════════════ */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.dark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = settings.dark ? '☀️' : '🌙';
+  document.getElementById('dark-toggle').classList.toggle('on', settings.dark);
+  document.getElementById('notif-toggle').classList.toggle('on', settings.notifications);
+  document.getElementById('lunar-toggle').classList.toggle('on', settings.showLunar);
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPORT / IMPORT
+   ══════════════════════════════════════════════════════ */
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'chronoluna-events.json'; a.click();
+}
+
+function exportICS() {
+  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ChronoLuna//EN\r\n';
+  events.forEach(ev => {
+    const [y,m,d] = ev.date.split('-');
+    ics += `BEGIN:VEVENT\r\nSUMMARY:${ev.name}\r\nDTSTART;VALUE=DATE:${y}${m}${d}\r\nDTEND;VALUE=DATE:${y}${m}${d}\r\n`;
+    if (ev.repeat === 'yearly') ics += 'RRULE:FREQ=YEARLY\r\n';
+    if (ev.repeat === 'monthly') ics += 'RRULE:FREQ=MONTHLY\r\n';
+    if (ev.repeat === 'daily') ics += 'RRULE:FREQ=DAILY\r\n';
+    if (ev.notes) ics += `DESCRIPTION:${ev.notes}\r\n`;
+    ics += `UID:${ev.id}@chronoluna\r\nEND:VEVENT\r\n`;
+  });
+  ics += 'END:VCALENDAR';
+  const blob = new Blob([ics], {type:'text/calendar'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'chronoluna.ics'; a.click();
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      imported.forEach(ev => {
+        if (!events.find(x => x.id === ev.id)) events.push(ev);
+      });
+      saveEvents(); renderAll();
+      showToast(`Imported ${imported.length} events!`);
+    } catch { showToast('Invalid JSON file.'); }
+  };
+  reader.readAsText(file);
+}
+
+const CN_HOLIDAYS_2026 = [
+  {id:'cnh1',name:'Chinese New Year 2026',date:'2026-02-17',category:'🏮',repeat:'yearly',calType:'chinese',notes:'Year of the Horse 🐴',notifs:['1','7']},
+  {id:'cnh2',name:'Lantern Festival',date:'2026-03-03',category:'🏮',repeat:'yearly',calType:'chinese',notes:'元宵节',notifs:['1']},
+  {id:'cnh3',name:'Qingming Festival',date:'2026-04-05',category:'🏮',repeat:'yearly',calType:'chinese',notes:'清明节 - Tomb Sweeping Day',notifs:['1']},
+  {id:'cnh4',name:'Dragon Boat Festival',date:'2026-06-20',category:'🏮',repeat:'yearly',calType:'chinese',notes:'端午节 - Eat Zongzi!',notifs:['1']},
+  {id:'cnh5',name:'Qixi Festival',date:'2026-08-19',category:'❤️',repeat:'yearly',calType:'chinese',notes:'七夕 - Chinese Valentine\'s Day',notifs:['1']},
+  {id:'cnh6',name:'Mid-Autumn Festival',date:'2026-10-01',category:'🏮',repeat:'yearly',calType:'chinese',notes:'中秋节 - Moon cake time!',notifs:['7']},
+  {id:'cnh7',name:'Double Ninth Festival',date:'2026-10-18',category:'🏮',repeat:'yearly',calType:'chinese',notes:'重阳节 - Senior Citizens\' Day',notifs:['1']},
+  {id:'cnh8',name:'Winter Solstice',date:'2026-12-22',category:'🏮',repeat:'yearly',calType:'chinese',notes:'冬至 - Dongzhi Festival',notifs:['1']},
+];
+
+/* ══════════════════════════════════════════════════════
+   EVENT LISTENERS
+   ══════════════════════════════════════════════════════ */
+document.getElementById('add-btn').addEventListener('click', openAdd);
+document.getElementById('cancel-btn').addEventListener('click', () => closeModal('add-overlay'));
+document.getElementById('save-btn').addEventListener('click', saveEvent);
+document.getElementById('delete-btn').addEventListener('click', deleteEvent);
+document.getElementById('detail-close-btn').addEventListener('click', () => { detailId=null; closeModal('detail-overlay'); });
+document.getElementById('settings-btn').addEventListener('click', () => openModal('settings-overlay'));
+document.getElementById('settings-close-btn').addEventListener('click', () => closeModal('settings-overlay'));
+document.getElementById('next-banner').addEventListener('click', () => {
+  const track = document.getElementById('carousel-track');
+  track.scrollTo({left:0, behavior:'smooth'});
+  track.closest('section,div').scrollIntoView({behavior:'smooth'});
+});
+
+document.getElementById('share-link-btn').addEventListener('click', () => shareLink(detailId));
+document.getElementById('share-img-btn').addEventListener('click', () => showToast('Screenshot to share! 📸'));
+document.getElementById('edit-from-detail-btn').addEventListener('click', () => openEdit(detailId));
+
+document.getElementById('theme-btn').addEventListener('click', () => {
+  settings.dark = !settings.dark; applyTheme(); saveSettings(); renderAll();
+});
+
+document.getElementById('dark-toggle').addEventListener('click', () => {
+  settings.dark = !settings.dark; applyTheme(); saveSettings(); renderAll();
+});
+document.getElementById('notif-toggle').addEventListener('click', () => {
+  settings.notifications = !settings.notifications;
+  if (settings.notifications) Notification.requestPermission();
+  applyTheme(); saveSettings();
+});
+document.getElementById('lunar-toggle').addEventListener('click', () => {
+  settings.showLunar = !settings.showLunar; applyTheme(); saveSettings(); renderAll();
+});
+
+document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+document.getElementById('export-ics-btn').addEventListener('click', exportICS);
+document.getElementById('import-file').addEventListener('change', e => { if (e.target.files[0]) importJSON(e.target.files[0]); });
+document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+
+document.getElementById('import-cn-holidays').addEventListener('click', () => {
+  let added = 0;
+  CN_HOLIDAYS_2026.forEach(ev => {
+    if (!events.find(x => x.id === ev.id)) { events.push(ev); added++; }
+  });
+  saveEvents(); renderAll(); closeModal('settings-overlay');
+  showToast(`Added ${added} Chinese festivals! 🏮`);
+});
+
+// Category buttons
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => { selectedCat = btn.dataset.cat; updateCatUI(); });
+});
+
+// Repeat toggle
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => { selectedRepeat = btn.dataset.repeat; updateRepeatUI(); });
+});
+
+// Notif chips
+document.querySelectorAll('.notif-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const v = chip.querySelector('input').value;
+    if (selectedNotifs.has(v)) selectedNotifs.delete(v); else selectedNotifs.add(v);
+    updateNotifUI();
+  });
+});
+
+// Date → lunar
+document.getElementById('ev-date').addEventListener('change', e => {
+  updateLunarDisplay(e.target.value);
+  document.getElementById('lunar-info-row').style.display = 'block';
+});
+
+// Cal type toggle
+document.getElementById('ev-cal-type').addEventListener('change', e => {
+  document.getElementById('lunar-info-row').style.display = 'block';
+});
+
+// Filter tabs
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    currentFilter = tab.dataset.filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderList();
+  });
+});
+
+// Close overlay on backdrop click
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) { detailId=null; ov.classList.remove('open'); } });
+});
+
+/* ══════════════════════════════════════════════════════
+   SUPABASE CONNECTION MANAGER
+   ══════════════════════════════════════════════════════ */
+let supabase = null;
+let sbConfig = JSON.parse(localStorage.getItem('cl_supabase') || 'null');
+// sbConfig = { url, key } or null
+
+function sbSetStatus(type, msg) {
+  const el = document.getElementById('sb-status');
+  const msgEl = document.getElementById('sb-status-msg');
+  el.className = 'sb-status ' + type;
+  msgEl.textContent = msg;
+}
+
+async function initSupabase(url, key) {
+  // Dynamically load Supabase JS SDK from CDN
+  if (!window.supabaseLib) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    window.supabaseLib = window.supabase; // UMD global
+  }
+  return window.supabaseLib.createClient(url.trim(), key.trim());
+}
+
+async function testAndConnect(url, key) {
+  if (!url || !key) { sbSetStatus('error', 'Please fill in both fields.'); return false; }
+  if (!url.startsWith('https://')) { sbSetStatus('error', 'URL must start with https://'); return false; }
+
+  sbSetStatus('loading', 'Connecting to Supabase…');
+  document.getElementById('sb-connect-btn').disabled = true;
+
+  try {
+    const client = await initSupabase(url, key);
+    // Test connection with a lightweight query
+    const { error } = await client.from('events').select('id').limit(1);
+    if (error && error.code !== 'PGRST116' && error.message && error.message.includes('relation')) {
+      // Table doesn't exist yet — that's okay, still connected
+    }
+    if (error && (error.message?.includes('Invalid API key') || error.message?.includes('JWT'))) {
+      throw new Error('Invalid API key. Check your anon key.');
+    }
+    supabase = client;
+    sbConfig = { url: url.trim(), key: key.trim() };
+    localStorage.setItem('cl_supabase', JSON.stringify(sbConfig));
+    sbSetStatus('success', 'Connected successfully!');
+    updateSbIndicator(true, url);
+    updateSbSettingsCard();
+    return true;
+  } catch (err) {
+    sbSetStatus('error', err.message || 'Connection failed. Check URL and key.');
+    document.getElementById('sb-connect-btn').disabled = false;
+    return false;
+  }
+}
+
+function disconnectSupabase() {
+  if (!confirm('Disconnect Supabase? Events will continue to be stored locally.')) return;
+  supabase = null; sbConfig = null;
+  localStorage.removeItem('cl_supabase');
+  updateSbIndicator(false);
+  updateSbSettingsCard();
+  showToast('Disconnected from Supabase.');
+}
+
+function updateSbIndicator(connected, url) {
+  const ind = document.getElementById('sb-indicator');
+  const lbl = document.getElementById('sb-indicator-label');
+  if (connected) {
+    ind.className = 'sb-indicator connected';
+    // Show short project ref from URL
+    try { const ref = new URL(url).hostname.split('.')[0]; lbl.textContent = ref; }
+    catch { lbl.textContent = 'Synced'; }
+  } else {
+    ind.className = 'sb-indicator local';
+    lbl.textContent = 'Local';
+  }
+}
+
+function updateSbSettingsCard() {
+  const statusLbl = document.getElementById('sb-settings-status-label');
+  const urlLbl = document.getElementById('sb-settings-url');
+  const disconnBtn = document.getElementById('sb-disconnect-btn');
+  const reconfBtn = document.getElementById('sb-reconfigure-btn');
+  if (sbConfig) {
+    statusLbl.textContent = '✅ Connected';
+    statusLbl.style.color = 'var(--jade)';
+    urlLbl.textContent = sbConfig.url;
+    disconnBtn.style.display = 'inline-flex';
+    reconfBtn.textContent = '✏️ Edit Connection';
+  } else {
+    statusLbl.textContent = '○ Not connected — using local storage';
+    statusLbl.style.color = 'var(--muted)';
+    urlLbl.textContent = '';
+    disconnBtn.style.display = 'none';
+    reconfBtn.textContent = '⚙️ Connect Supabase';
+  }
+}
+
+// Override saveEvents to also push to Supabase if connected
+async function saveEvents() {
+  localStorage.setItem('cl_events', JSON.stringify(events));
+  if (!supabase) return;
+  try {
+    await supabase.from('events').upsert(events.map(ev => ({...ev, updated_at: new Date().toISOString()})));
+  } catch(e) { console.warn('Supabase sync error:', e.message); }
+}
+
+// Load events from Supabase if connected (merges with local)
+async function loadEventsFromSupabase() {
+  if (!supabase) return;
+  try {
+    const { data, error } = await supabase.from('events').select('*');
+    if (error) throw error;
+    if (data && data.length) {
+      // Merge: remote wins for matching IDs
+      const remoteIds = new Set(data.map(e => e.id));
+      const localOnly = events.filter(e => !remoteIds.has(e.id));
+      events = [...data, ...localOnly];
+      localStorage.setItem('cl_events', JSON.stringify(events));
+      renderAll();
+      showToast(`Synced ${data.length} events from Supabase ☁️`);
+    }
+  } catch(e) { console.warn('Could not load from Supabase:', e.message); }
+}
+
+/* ══════════════════════════════════════════════════════
+   SUPABASE MODAL FLOW
+   ══════════════════════════════════════════════════════ */
+function showSupabaseModal() {
+  const ov = document.getElementById('supabase-overlay');
+  ov.classList.add('open');
+  // Pre-fill if already configured
+  if (sbConfig) {
+    document.getElementById('sb-url-input').value = sbConfig.url;
+    document.getElementById('sb-key-input').value = sbConfig.key;
+  }
+  document.getElementById('sb-status').className = 'sb-status';
+  document.getElementById('sb-connect-btn').disabled = false;
+  document.getElementById('sb-connect-label').textContent = '🔗 Connect & Sync';
+}
+
+function hideSupabaseModal() {
+  document.getElementById('supabase-overlay').classList.remove('open');
+}
+
+document.getElementById('sb-connect-btn').addEventListener('click', async () => {
+  const url = document.getElementById('sb-url-input').value.trim();
+  const key = document.getElementById('sb-key-input').value.trim();
+  const label = document.getElementById('sb-connect-label');
+  label.textContent = 'Connecting…';
+  const ok = await testAndConnect(url, key);
+  if (ok) {
+    label.textContent = '✅ Connected!';
+    setTimeout(async () => {
+      hideSupabaseModal();
+      closeModal('settings-overlay');
+      await loadEventsFromSupabase();
+    }, 1000);
+  } else {
+    label.textContent = '🔗 Connect & Sync';
+    document.getElementById('sb-connect-btn').disabled = false;
+  }
+});
+
+document.getElementById('sb-local-btn').addEventListener('click', () => {
+  hideSupabaseModal();
+  localStorage.setItem('cl_sb_skipped', '1');
+});
+
+document.getElementById('sb-eye-btn').addEventListener('click', () => {
+  const inp = document.getElementById('sb-key-input');
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  document.getElementById('sb-eye-btn').textContent = isHidden ? '🙈' : '👁';
+});
+
+document.getElementById('sb-indicator').addEventListener('click', () => {
+  if (sbConfig) {
+    openModal('settings-overlay');
+  } else {
+    showSupabaseModal();
+  }
+});
+
+document.getElementById('sb-reconfigure-btn').addEventListener('click', () => {
+  closeModal('settings-overlay');
+  showSupabaseModal();
+});
+
+document.getElementById('sb-disconnect-btn').addEventListener('click', disconnectSupabase);
+
+/* ══════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════ */
+applyTheme();
+renderAll();
+updateSbSettingsCard();
+
+// Auto-reconnect if credentials were saved previously
+(async () => {
+  if (sbConfig) {
+    try {
+      supabase = await initSupabase(sbConfig.url, sbConfig.key);
+      updateSbIndicator(true, sbConfig.url);
+      await loadEventsFromSupabase();
+    } catch(e) {
+      console.warn('Auto-reconnect failed:', e.message);
+      updateSbIndicator(false);
+    }
+  } else if (!localStorage.getItem('cl_sb_skipped')) {
+    // First visit — show connection modal
+    setTimeout(() => showSupabaseModal(), 400);
+  }
+})();
+
+// Handle #event= deep links
+const hash = location.hash;
+if (hash.startsWith('#event=')) {
+  const id = hash.slice(7);
+  if (events.find(e => e.id === id)) openDetail(id);
+}
+</script>
+</body>
+</html>
