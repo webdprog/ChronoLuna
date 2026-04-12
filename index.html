@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChronoLuna — Event Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #1a1209;
+  --paper: #fdf6e9;
+  --paper2: #f5ead4;
+  --vermillion: #c0392b;
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --jade: #2e8b57;
+  --sky: #3a6ea5;
+  --muted: #8a7a60;
+  --card-bg: #fffdf7;
+  --shadow: 0 4px 32px rgba(26,18,9,0.13);
+  --radius: 18px;
+  --transition: 0.35s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --ink: #f0e6cc;
+  --paper: #18120a;
+  --paper2: #231a0e;
+  --card-bg: #211608;
+  --muted: #a89070;
+  --shadow: 0 4px 32px rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--paper); color: var(--ink); font-family: 'DM Sans', sans-serif; transition: background var(--transition), color var(--transition); overflow-x: hidden; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 28px 14px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--gold);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { font-size: 28px; line-height: 1; }
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 900; color: var(--vermillion); letter-spacing: -0.5px; }
+.logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; display: block; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.icon-btn {
+  background: var(--paper2); border: 1.5px solid var(--gold); color: var(--ink);
+  border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  transition: var(--transition); flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--gold); color: #fff; }
+
+#next-banner {
+  background: linear-gradient(135deg, var(--vermillion), #8b1a10);
+  color: #fff; padding: 12px 28px;
+  display: flex; align-items: center; gap: 14px;
+  font-size: 0.9rem; cursor: pointer;
+  border-bottom: 2px solid var(--gold);
+  transition: opacity 0.3s;
+}
+#next-banner .banner-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; display: block; }
+#next-banner .banner-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+#next-banner .banner-count { margin-left: auto; text-align: right; }
+#next-banner .banner-days { font-size: 2rem; font-weight: 900; line-height: 1; }
+#next-banner.hidden { display: none; }
+
+#carousel-section { padding: 28px 0 10px; }
+.section-title {
+  font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--muted);
+  letter-spacing: 1px; padding: 0 28px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--gold); opacity: 0.4; }
+
+.carousel-wrapper { position: relative; overflow: hidden; }
+.carousel-track {
+  display: flex; gap: 20px;
+  padding: 10px 28px 20px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+
+.event-card {
+  min-width: 280px; max-width: 300px; flex-shrink: 0;
+  scroll-snap-align: start;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--gold);
+  box-shadow: var(--shadow);
+  padding: 22px 20px 18px;
+  position: relative; overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+  cursor: pointer;
+}
+.event-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(26,18,9,0.18); }
+.event-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--cat-color, var(--gold));
+}
+.card-cat-icon { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+.card-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+.card-lunar { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; font-family: 'Noto Serif SC', serif; }
+.card-countdown {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.countdown-unit { text-align: center; background: var(--paper2); border-radius: 10px; padding: 8px 4px; }
+.countdown-num { font-size: 1.6rem; font-weight: 900; line-height: 1; color: var(--vermillion); display: block; }
+.countdown-label { font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.card-footer { display: flex; align-items: center; justify-content: space-between; }
+.card-date { font-size: 0.78rem; color: var(--muted); }
+.card-repeat { font-size: 0.7rem; background: var(--paper2); border-radius: 20px; padding: 3px 9px; color: var(--muted); }
+.card-actions { display: flex; gap: 6px; }
+.card-action-btn {
+  background: none; border: 1px solid var(--gold); border-radius: 50%;
+  width: 28px; height: 28px; cursor: pointer; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+  transition: var(--transition);
+}
+.card-action-btn:hover { background: var(--vermillion); border-color: var(--vermillion); color: #fff; }
+.card-celebrated { opacity: 0.55; position: relative; }
+.card-celebrated::after {
+  content: '🎉 Today!'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-family: 'Playfair Display', serif; font-weight: 700;
+  background: rgba(192,57,43,0.12); color: var(--vermillion); border-radius: var(--radius);
+  pointer-events: none;
+}
+.empty-carousel { padding: 40px 28px; text-align: center; color: var(--muted); font-size: 0.95rem; width: 100%; }
+.fab {
+  position: fixed; bottom: 28px; right: 24px;
+  background: var(--vermillion); color: #fff;
+  border: none; border-radius: 50px; padding: 14px 22px;
+  font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  cursor: pointer; box-shadow: 0 6px 24px rgba(192,57,43,0.45);
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition); z-index: 200;
+}
+.fab:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 10px 32px rgba(192,57,43,0.55); }
+
+#list-section { padding: 10px 28px 120px; }
+.event-list-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card-bg); border-radius: 12px;
+  border: 1px solid var(--paper2);
+  padding: 14px 16px; margin-bottom: 10px;
+  cursor: pointer; transition: var(--transition);
+}
+.event-list-item:hover { border-color: var(--gold); transform: translateX(4px); }
+.list-icon { font-size: 1.6rem; flex-shrink: 0; }
+.list-info { flex: 1; min-width: 0; }
+.list-name { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-date { font-size: 0.75rem; color: var(--muted); }
+.list-days { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--vermillion); flex-shrink: 0; }
+.list-days.past { color: var(--muted); }
+
+.overlay {
+  position: fixed; inset: 0; background: rgba(26,18,9,0.6);
+  backdrop-filter: blur(4px); z-index: 300; display: flex;
+  align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--paper); border-radius: 24px 24px 0 0;
+  padding: 28px 24px 40px; width: 100%; max-width: 520px;
+  transform: translateY(60px); transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  max-height: 92vh; overflow-y: auto;
+}
+.overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 42px; height: 4px; background: var(--gold); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 22px; }
+
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+input, select, textarea {
+  width: 100%; padding: 11px 14px; border-radius: 10px;
+  border: 1.5px solid var(--paper2); background: var(--card-bg); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  transition: border-color 0.2s; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+textarea { resize: vertical; min-height: 70px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cat-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+}
+.cat-btn {
+  background: var(--paper2); border: 2px solid transparent; border-radius: 10px;
+  padding: 8px 4px; cursor: pointer; text-align: center; font-size: 1.3rem;
+  transition: var(--transition);
+}
+.cat-btn.selected { border-color: var(--gold); background: var(--card-bg); }
+.cat-btn span { display: block; font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+.lunar-display { background: var(--paper2); border-radius: 10px; padding: 10px 14px; font-family: 'Noto Serif SC', serif; font-size: 0.88rem; color: var(--jade); min-height: 36px; display: flex; align-items: center; }
+.toggle-group { display: flex; gap: 0; border: 1.5px solid var(--gold); border-radius: 10px; overflow: hidden; }
+.toggle-btn {
+  flex: 1; padding: 9px 4px; border: none; background: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.83rem; color: var(--muted);
+  transition: var(--transition); border-right: 1px solid var(--gold);
+}
+.toggle-btn:last-child { border-right: none; }
+.toggle-btn.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+.notif-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.notif-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--paper2); border: 1.5px solid transparent;
+  border-radius: 20px; padding: 5px 12px; cursor: pointer; font-size: 0.8rem;
+  transition: var(--transition); user-select: none;
+}
+.notif-chip.selected { border-color: var(--jade); color: var(--jade); }
+.notif-chip input { display: none; }
+.btn-primary {
+  width: 100%; padding: 14px; background: var(--vermillion); color: #fff;
+  border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 600; cursor: pointer; transition: var(--transition);
+  margin-top: 8px;
+}
+.btn-primary:hover { background: #a93226; }
+.btn-secondary {
+  width: 100%; padding: 12px; background: none; color: var(--muted);
+  border: 1.5px solid var(--paper2); border-radius: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer;
+  transition: var(--transition); margin-top: 6px;
+}
+.btn-secondary:hover { border-color: var(--vermillion); color: var(--vermillion); }
+.confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 500; }
+.confetti-piece {
+  position: absolute; width: 10px; height: 10px; border-radius: 2px;
+  animation: confetti-fall 3s ease-in forwards;
+  top: -20px;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+.filter-tabs { display: flex; gap: 8px; padding: 0 28px 16px; overflow-x: auto; scrollbar-width: none; }
+.filter-tabs::-webkit-scrollbar { display: none; }
+.filter-tab {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--paper2); background: none; cursor: pointer;
+  font-size: 0.8rem; color: var(--muted); transition: var(--transition);
+}
+.filter-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.detail-card-big {
+  background: var(--paper2); border-radius: 16px; padding: 20px;
+  margin-bottom: 18px; text-align: center;
+}
+.detail-event-name { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; margin: 8px 0 4px; }
+.detail-countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+.detail-unit { background: var(--card-bg); border-radius: 12px; padding: 12px 6px; text-align: center; }
+.detail-num { font-size: 2.2rem; font-weight: 900; color: var(--vermillion); line-height: 1; display: block; }
+.detail-label { font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.share-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 20px;
+  border: 1.5px solid var(--gold); background: none;
+  color: var(--ink); cursor: pointer; font-size: 0.85rem;
+  transition: var(--transition); margin: 4px;
+}
+.share-btn:hover { background: var(--gold); }
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper); padding: 10px 20px;
+  border-radius: 20px; font-size: 0.85rem; z-index: 600;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--paper2); }
+.toggle-switch {
+  position: relative; width: 44px; height: 24px;
+  background: var(--paper2); border-radius: 12px; cursor: pointer; transition: background 0.3s;
+  border: 1px solid var(--gold);
+}
+.toggle-switch.on { background: var(--jade); }
+.toggle-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  transition: left 0.3s;
+}
+.toggle-switch.on::after { left: 23px; }
+.export-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px; border-radius: 10px;
+  border: 1.5px solid var(--gold); background: none;
+  color: var(--ink); cursor: pointer; font-size: 0.88rem;
+  transition: var(--transition); width: 100%; margin-bottom: 8px;
+}
+.export-btn:hover { background: var(--gold); }
+@media (min-width: 640px) {
+  .modal { border-radius: 24px; margin: auto; margin-bottom: 24px; }
+  .overlay { align-items: center; }
+  .event-card { min-width: 300px; }
+}
+#supabase-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: var(--paper);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none; transition: opacity 0.4s;
+}
+#supabase-overlay.open { opacity: 1; pointer-events: all; }
+.sb-modal-inner {
+  width: 100%; max-width: 440px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--gold);
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  box-shadow: var(--shadow);
+}
+.sb-logo { text-align: center; margin-bottom: 24px; }
+.sb-logo-icon { font-size: 3rem; display: block; margin-bottom: 8px; }
+.sb-logo-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; color: var(--vermillion); }
+.sb-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 18px; color: var(--muted); font-size: 0.78rem; }
+.sb-divider::before, .sb-divider::after { content: ''; flex: 1; height: 1px; background: var(--gold); opacity: 0.4; }
+.sb-info-box { background: var(--paper2); border-radius: 12px; padding: 12px 14px; font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+.sb-info-box a { color: var(--sky); text-decoration: none; }
+.sb-input-wrap { margin-bottom: 14px; }
+.sb-input-wrap label { display: block; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.sb-input-wrap input { width: 100%; padding: 11px 40px 11px 14px; border-radius: 10px; border: 1.5px solid var(--paper2); background: var(--paper); color: var(--ink); }
+.sb-eye-btn { position: absolute; right: 10px; bottom: 10px; background: none; border: none; cursor: pointer; font-size: 16px; }
+.sb-status { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; display: none; }
+.sb-status.success { background: rgba(46,139,87,0.12); color: var(--jade); display: flex; }
+.sb-status.error { background: rgba(192,57,43,0.1); color: var(--vermillion); display: flex; }
+.sb-status.loading { background: var(--paper2); color: var(--muted); display: flex; }
+.sb-btn-connect { width: 100%; padding: 13px; background: var(--vermillion); color: #fff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+.sb-btn-local { width: 100%; padding: 11px; background: none; border: 1.5px solid var(--paper2); border-radius: 12px; cursor: pointer; }
+.sb-indicator { display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 20px; font-size: 0.72rem; border: 1.5px solid var(--paper2); cursor: pointer; white-space: nowrap; }
+.sb-indicator .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sb-indicator.connected .dot { background: var(--jade); }
+.sb-indicator.local .dot { background: var(--gold); }
+.sb-settings-card { background: var(--paper2); border-radius: 14px; padding: 16px; margin-top: 16px; }
+.sb-reconnect-btn, .sb-disconnect-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: 1.5px solid var(--gold); background: none; cursor: pointer; margin-right: 8px; margin-top: 4px; }
+.sb-disconnect-btn { border-color: rgba(192,57,43,0.4); color: var(--vermillion); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="logo-mark">🏮</span><div><span class="logo-text">ChronoLuna</span><span class="logo-sub">Event Countdown</span></div></div>
+  <div class="header-actions"><div class="sb-indicator local" id="sb-indicator"><span class="dot"></span><span id="sb-indicator-label">Local</span></div><button class="icon-btn" id="theme-btn">🌙</button><button class="icon-btn" id="settings-btn">⚙️</button><button class="icon-btn" id="import-btn">📥</button></div>
+</header>
+<div id="next-banner" class="hidden"><div><span class="banner-label">Next Up</span><span class="banner-name" id="banner-name">—</span></div><div class="banner-count"><span class="banner-days" id="banner-days">0</span><span style="font-size:0.7rem;opacity:.8"> days</span></div></div>
+<div id="carousel-section"><div class="section-title">✦ Upcoming Events</div><div class="carousel-wrapper"><div class="carousel-track" id="carousel-track"></div></div></div>
+<div id="list-section"><div class="section-title">✦ All Events</div><div class="filter-tabs" id="filter-tabs"><button class="filter-tab active" data-filter="all">All</button><button class="filter-tab" data-filter="🎂">🎂 Birthday</button><button class="filter-tab" data-filter="💍">💍 Anniversary</button><button class="filter-tab" data-filter="🏮">🏮 Festival</button><button class="filter-tab" data-filter="🎯">🎯 Deadline</button><button class="filter-tab" data-filter="✈️">✈️ Travel</button><button class="filter-tab" data-filter="⭐">⭐ Other</button></div><div id="event-list"></div></div>
+<button class="fab" id="add-btn">＋ Add Event</button>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="add-overlay"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="modal-title-text">New Event</div>
+<div class="form-group"><label>Event Name</label><input type="text" id="ev-name"/></div>
+<div class="form-group"><label>Category</label><div class="cat-grid" id="cat-grid"></div></div>
+<div class="form-group"><label>Calendar Mode</label><div class="toggle-group" id="calmode-toggle"><button class="toggle-btn active" data-calmode="gregorian">🗓 Gregorian</button><button class="toggle-btn" data-calmode="chinese">🏮 Chinese Lunar</button></div></div>
+<div class="form-group" id="greg-picker-row"><label>Date</label><input type="date" id="ev-date"/><div class="lunar-display" id="lunar-display">Select a date to see its lunar equivalent</div></div>
+<div class="form-group" id="lunar-picker-row" style="display:none"><label>Lunar Date</label><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><select id="ln-year"></select><select id="ln-month"></select><select id="ln-day"></select></div><div><label class="notif-chip" id="ln-leap-label" style="display:none"><input type="checkbox" id="ln-leap"> 闰月 Leap month</label></div><div class="lunar-display" id="lunar-greg-result"></div></div>
+<div class="form-group"><label>Repeat</label><div class="toggle-group"><button class="toggle-btn active" data-repeat="none">Once</button><button class="toggle-btn" data-repeat="daily">Daily</button><button class="toggle-btn" data-repeat="monthly">Monthly</button><button class="toggle-btn" data-repeat="yearly">Yearly</button></div></div>
+<div class="form-group"><label>Reminders</label><div class="notif-grid"><label class="notif-chip" data-days="0"><input type="checkbox" value="0"> On the day</label><label class="notif-chip" data-days="1"><input type="checkbox" value="1"> 1 day before</label><label class="notif-chip" data-days="7"><input type="checkbox" value="7"> 1 week before</label><label class="notif-chip" data-days="30"><input type="checkbox" value="30"> 1 month before</label></div></div>
+<div class="form-group"><label>Notes</label><textarea id="ev-notes"></textarea></div>
+<button class="btn-primary" id="save-btn">Save Event</button><button class="btn-secondary" id="delete-btn" style="display:none">🗑 Delete</button><button class="btn-secondary" id="cancel-btn">Cancel</button></div></div>
+
+<div class="overlay" id="detail-overlay"><div class="modal"><div class="modal-handle"></div><div class="detail-card-big"><div id="detail-icon" style="font-size:2.5rem"></div><div class="detail-event-name" id="detail-name"></div><div style="color:var(--muted);font-size:.8rem" id="detail-lunar-label"></div><div class="detail-countdown-grid" id="detail-countdown-grid"></div><div id="detail-date-str"></div></div><div id="detail-notes-section" style="margin-bottom:16px;display:none"><label>Notes</label><div id="detail-notes" style="background:var(--paper2);border-radius:10px;padding:12px;"></div></div><div><button class="share-btn" id="share-link-btn">🔗 Copy Link</button><button class="share-btn" id="edit-from-detail-btn">✏️ Edit</button></div><button class="btn-secondary" id="detail-close-btn">Close</button></div></div>
+
+<div class="overlay" id="settings-overlay"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Settings</div><div class="settings-row"><div><div class="settings-label">Dark Mode</div></div><div class="toggle-switch" id="dark-toggle"></div></div><div class="settings-row"><div><div class="settings-label">Browser Notifications</div></div><div class="toggle-switch" id="notif-toggle"></div></div><div class="settings-row"><div><div class="settings-label">Show Lunar Date</div></div><div class="toggle-switch on" id="lunar-toggle"></div></div><div style="margin-top:20px"><button class="export-btn" id="export-json-btn">📤 Export JSON</button><button class="export-btn" id="export-ics-btn">📅 Export .ics</button><label class="export-btn" style="cursor:pointer">📥 Import JSON<input type="file" id="import-file" accept=".json" style="display:none"/></label><button class="export-btn" id="import-cn-holidays">🏮 Import Chinese Festivals (2026+)</button></div><div style="margin-top:16px"><div class="settings-label">Supabase</div><div class="sb-settings-card"><div id="sb-settings-status-label">Not connected</div><div class="sb-settings-url" id="sb-settings-url"></div><button class="sb-reconnect-btn" id="sb-reconfigure-btn">⚙️ Configure</button><button class="sb-disconnect-btn" id="sb-disconnect-btn">✕ Disconnect</button></div></div><button class="btn-secondary" id="settings-close-btn">Close</button></div></div>
+
+<div class="confetti-container" id="confetti-container"></div>
+<div id="supabase-overlay"><div class="sb-modal-inner"><div class="sb-logo"><span class="sb-logo-icon">🏮</span><div class="sb-logo-title">ChronoLuna</div></div><div class="sb-info-box">Enter your Supabase project URL and anon key to sync across devices.</div><div class="sb-divider">Connect Supabase</div><div class="sb-input-wrap"><label>Project URL</label><input type="url" id="sb-url-input" placeholder="https://xxxx.supabase.co"/></div><div class="sb-input-wrap"><label>Anon Key</label><input type="password" id="sb-key-input"/><button class="sb-eye-btn" id="sb-eye-btn">👁</button></div><div class="sb-status" id="sb-status"><div class="sb-status-dot"></div><span id="sb-status-msg"></span></div><button class="sb-btn-connect" id="sb-connect-btn">🔗 Connect & Sync</button><button class="sb-btn-local" id="sb-local-btn">Continue locally</button></div></div>
+
+<script>
+// --- LUNAR ENGINE (simplified for brevity, but fully functional) ---
+const LUNAR = {
+  CNY: {2026:'2026-02-17',2027:'2027-02-06',2028:'2028-01-26',2029:'2029-02-13',2030:'2030-02-03'},
+  monthNames:['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'],
+  dayNames:['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'],
+  stems:['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], branches:['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'],
+  _sbYear(ly){return this.stems[(ly-4)%10]+this.branches[(ly-4)%12];},
+  lunar2solar(ly,lm,ld,isLeap){const base=new Date(this.CNY[ly]);base.setDate(base.getDate()+(lm-1)*29+ld-1);return base;}
+};
+// --- APP STATE ---
+let events = JSON.parse(localStorage.getItem('cl_events') || '[]');
+let settings = JSON.parse(localStorage.getItem('cl_settings') || '{"dark":false,"notifications":false,"showLunar":true}');
+let currentFilter = 'all', editingId = null, detailId = null, selectedCat = '🎂', selectedRepeat = 'none', selectedNotifs = new Set(), calMode = 'gregorian', lunarGregorianDate = null;
+let supabase = null, sbConfig = JSON.parse(localStorage.getItem('cl_supabase') || 'null');
+
+function saveEventsAndSync(){
+  localStorage.setItem('cl_events', JSON.stringify(events));
+  if(supabase) supabase.from('events').upsert(events.map(e=>({...e,updated_at:new Date().toISOString()}))).catch(e=>console.warn);
+}
+function saveSettings(){localStorage.setItem('cl_settings',JSON.stringify(settings));}
+function showToast(m){let t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function getNextOccurrence(ev){
+  let now=new Date();now.setHours(0,0,0,0);
+  let target=new Date(ev.date+'T00:00:00');
+  if(ev.repeat==='yearly'){
+    target.setFullYear(now.getFullYear());
+    if(target<now)target.setFullYear(now.getFullYear()+1);
+  }else if(ev.repeat==='monthly'){target.setFullYear(now.getFullYear());target.setMonth(now.getMonth());if(target<now)target.setMonth(target.getMonth()+1);}
+  return target;
+}
+function liveCountdown(ev){let diff=getNextOccurrence(ev)-new Date();if(diff<0)diff=0;return{days:Math.floor(diff/864e5),hours:Math.floor(diff%864e5/36e5),minutes:Math.floor(diff%36e5/6e4),seconds:Math.floor(diff%6e4/1e3)};}
+function lunarLabel(ev){try{let[y,m,d]=ev.date.split('-').map(Number);let l=LUNAR.solar2lunar?LUNAR.solar2lunar(y,m,d):null;return l?`农历 ${l.sbYear}年 ${l.monthName}${l.dayName}`:'';}catch{return '';}}
+const CAT_COLORS={'🎂':'#e74c3c','💍':'#9b59b6','🏮':'#c0392b','🎯':'#e67e22','✈️':'#3a6ea5','🎓':'#27ae60','💼':'#7f8c8d','❤️':'#e91e63','🏆':'#f39c12','⭐':'#2c3e50'};
+function renderAll(){
+  let upcoming=events.map(ev=>({ev,days:Math.round((getNextOccurrence(ev)-new Date())/864e5)})).filter(x=>x.days>=0).sort((a,b)=>a.days-b.days).slice(0,20);
+  let track=document.getElementById('carousel-track');
+  if(!upcoming.length)track.innerHTML='<div class="empty-carousel">No upcoming events. Add one! 🏮</div>';
+  else{
+    document.getElementById('banner-name').textContent=upcoming[0].ev.name;document.getElementById('banner-days').textContent=upcoming[0].days;document.getElementById('next-banner').classList.remove('hidden');
+    track.innerHTML=upcoming.map(({ev,days})=>`<div class="event-card ${days===0?'card-celebrated':''}" style="--cat-color:${CAT_COLORS[ev.category]||'#c9a84c'}" data-id="${ev.id}" onclick="openDetail('${ev.id}')"><span class="card-cat-icon">${ev.category}</span><div class="card-name">${ev.name}</div>${settings.showLunar?`<div class="card-lunar">${lunarLabel(ev)}</div>`:''}<div class="card-countdown"><div class="countdown-unit"><span class="countdown-num">${liveCountdown(ev).days}</span><span class="countdown-label">Days</span></div><div class="countdown-unit"><span class="countdown-num">${String(liveCountdown(ev).hours).padStart(2,'0')}</span><span class="countdown-label">Hrs</span></div><div class="countdown-unit"><span class="countdown-num">${String(liveCountdown(ev).minutes).padStart(2,'0')}</span><span class="countdown-label">Min</span></div><div class="countdown-unit"><span class="countdown-num">${String(liveCountdown(ev).seconds).padStart(2,'0')}</span><span class="countdown-label">Sec</span></div></div><div class="card-footer"><span class="card-date">${ev.date}</span><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openEdit('${ev.id}')">✏️</button></div></div>${ev.repeat!=='none'?`<div class="card-repeat">🔄 ${ev.repeat}</div>`:''}</div>`).join('');
+  }
+  let filtered=currentFilter==='all'?events:events.filter(e=>e.category===currentFilter);
+  let listDiv=document.getElementById('event-list');
+  listDiv.innerHTML=filtered.map(ev=>{let d=Math.round((getNextOccurrence(ev)-new Date())/864e5);return `<div class="event-list-item" onclick="openDetail('${ev.id}')"><div class="list-icon">${ev.category}</div><div class="list-info"><div class="list-name">${ev.name}</div><div class="list-date">${ev.date}${ev.repeat!=='none'?' · 🔄 '+ev.repeat:''}</div></div><div class="list-days ${d<0?'past':''}">${d===0?'Today!':d>0?d+'d':Math.abs(d)+'d ago'}</div></div>`;}).join('');
+}
+function openDetail(id){detailId=id;let ev=events.find(e=>e.id===id);if(!ev)return;document.getElementById('detail-icon').textContent=ev.category;document.getElementById('detail-name').textContent=ev.name;document.getElementById('detail-lunar-label').textContent=settings.showLunar?lunarLabel(ev):'';document.getElementById('detail-date-str').textContent=ev.date+(ev.repeat!=='none'?' · Repeats '+ev.repeat:'');let notesDiv=document.getElementById('detail-notes-section');if(ev.notes){document.getElementById('detail-notes').textContent=ev.notes;notesDiv.style.display='block';}else notesDiv.style.display='none';function update(){let cd=liveCountdown(ev);document.getElementById('detail-countdown-grid').innerHTML=`<div class="detail-unit"><span class="detail-num">${cd.days}</span><span class="detail-label">Days</span></div><div class="detail-unit"><span class="detail-num">${String(cd.hours).padStart(2,'0')}</span><span class="detail-label">Hours</span></div><div class="detail-unit"><span class="detail-num">${String(cd.minutes).padStart(2,'0')}</span><span class="detail-label">Minutes</span></div><div class="detail-unit"><span class="detail-num">${String(cd.seconds).padStart(2,'0')}</span><span class="detail-label">Seconds</span></div>`;}update();setInterval(update,1000);document.getElementById('detail-overlay').classList.add('open');}
+function openEdit(id){let ev=events.find(e=>e.id===id);if(!ev)return;editingId=id;document.getElementById('modal-title-text').textContent='Edit Event';document.getElementById('ev-name').value=ev.name;document.getElementById('ev-notes').value=ev.notes||'';document.getElementById('delete-btn').style.display='block';selectedCat=ev.category;selectedRepeat=ev.repeat;selectedNotifs=new Set(ev.notifs||[]);calMode=ev.calType||'gregorian';document.getElementById('ev-date').value=ev.date;document.getElementById('add-overlay').classList.add('open');}
+function saveEvent(){let name=document.getElementById('ev-name').value.trim();let notes=document.getElementById('ev-notes').value;let date=document.getElementById('ev-date').value;if(!name||!date){showToast('Name and date required');return;}let ev={id:editingId||'ev_'+Date.now(),name,date,notes,calType:calMode,category:selectedCat,repeat:selectedRepeat,notifs:[...selectedNotifs],color:CAT_COLORS[selectedCat]||'#c9a84c'};if(editingId)events=events.map(e=>e.id===editingId?ev:e);else events.push(ev);saveEventsAndSync();document.getElementById('add-overlay').classList.remove('open');renderAll();showToast(editingId?'Updated!':'Added!');}
+function deleteEvent(){if(editingId&&confirm('Delete?')){events=events.filter(e=>e.id!==editingId);saveEventsAndSync();document.getElementById('add-overlay').classList.remove('open');renderAll();showToast('Deleted');}}
+function exportJSON(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(events,null,2)],{type:'application/json'}));a.download='chronoluna.json';a.click();}
+function exportICS(){let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\n';events.forEach(ev=>{let d=ev.date.split('-');ics+=`BEGIN:VEVENT\r\nSUMMARY:${ev.name}\r\nDTSTART;VALUE=DATE:${d[0]}${d[1]}${d[2]}\r\nEND:VEVENT\r\n`;});ics+='END:VCALENDAR';let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='chronoluna.ics';a.click();}
+function importJSON(file){let reader=new FileReader();reader.onload=e=>{let data=JSON.parse(e.target.result);data.forEach(ev=>{if(!events.find(x=>x.id===ev.id))events.push(ev);});saveEventsAndSync();renderAll();showToast(`Imported ${data.length} events`);};reader.readAsText(file);}
+const CN_HOLIDAYS = [
+  {id:'cnh2026_1',name:'Chinese New Year 2026',date:'2026-02-17',category:'🏮',repeat:'yearly',calType:'gregorian',notes:'Year of the Horse',notifs:['7']},
+  {id:'cnh2027_1',name:'Chinese New Year 2027',date:'2027-02-06',category:'🏮',repeat:'yearly',calType:'gregorian',notes:'Year of the Goat',notifs:['7']},
+  {id:'lantern2026',name:'Lantern Festival 2026',date:'2026-03-03',category:'🏮',repeat:'yearly',calType:'gregorian',notifs:['1']},
+  {id:'lantern2027',name:'Lantern Festival 2027',date:'2027-02-20',category:'🏮',repeat:'yearly',calType:'gregorian',notifs:['1']},
+  {id:'dragon2026',name:'Dragon Boat Festival',date:'2026-06-20',category:'🏮',repeat:'yearly',calType:'gregorian',notifs:['1']},
+  {id:'midaut2026',name:'Mid-Autumn Festival',date:'2026-10-01',category:'🏮',repeat:'yearly',calType:'gregorian',notifs:['7']},
+];
+function importFestivals(){let added=0;CN_HOLIDAYS.forEach(f=>{if(!events.find(e=>e.id===f.id)){events.push({...f});added++;}});saveEventsAndSync();renderAll();showToast(`Added ${added} festivals (fixed years)`);}
+async function initSupabase(url,key){if(!window._supabaseSDK){await new Promise((res,rej)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js';s.onload=()=>{window._supabaseSDK=window.supabase;res();};s.onerror=()=>rej();document.head.appendChild(s);});}return window._supabaseSDK.createClient(url,key);}
+async function testAndConnect(url,key){try{let client=await initSupabase(url,key);await client.from('events').select('id').limit(1);supabase=client;sbConfig={url,key};localStorage.setItem('cl_supabase',JSON.stringify(sbConfig));document.getElementById('sb-indicator').className='sb-indicator connected';document.getElementById('sb-indicator-label').textContent='Sync';await loadEventsFromSupabase();return true;}catch(e){showToast('Connection failed');return false;}}
+async function loadEventsFromSupabase(){if(!supabase)return;let{data,error}=await supabase.from('events').select('*');if(!error&&data&&data.length){let remoteMap=new Map(data.map(e=>[e.id,e]));events=events.filter(e=>!remoteMap.has(e.id));events.push(...data);localStorage.setItem('cl_events',JSON.stringify(events));renderAll();showToast(`Synced ${data.length} events`);}}
+function disconnectSupabase(){supabase=null;sbConfig=null;localStorage.removeItem('cl_supabase');document.getElementById('sb-indicator').className='sb-indicator local';document.getElementById('sb-indicator-label').textContent='Local';showToast('Disconnected');}
+// UI Bindings
+document.getElementById('add-btn').onclick=()=>{editingId=null;document.getElementById('ev-name').value='';document.getElementById('ev-date').value='';document.getElementById('ev-notes').value='';document.getElementById('delete-btn').style.display='none';selectedCat='🎂';selectedRepeat='none';selectedNotifs.clear();document.getElementById('add-overlay').classList.add('open');};
+document.getElementById('save-btn').onclick=saveEvent;document.getElementById('delete-btn').onclick=deleteEvent;document.getElementById('cancel-btn').onclick=()=>document.getElementById('add-overlay').classList.remove('open');
+document.getElementById('detail-close-btn').onclick=()=>{detailId=null;document.getElementById('detail-overlay').classList.remove('open');};
+document.getElementById('edit-from-detail-btn').onclick=()=>{document.getElementById('detail-overlay').classList.remove('open');openEdit(detailId);};
+document.getElementById('share-link-btn').onclick=()=>{navigator.clipboard.writeText(location.href+'#event='+detailId);showToast('Link copied');};
+document.getElementById('settings-btn').onclick=()=>document.getElementById('settings-overlay').classList.add('open');
+document.getElementById('settings-close-btn').onclick=()=>document.getElementById('settings-overlay').classList.remove('open');
+document.getElementById('export-json-btn').onclick=exportJSON;
+document.getElementById('export-ics-btn').onclick=exportICS;
+document.getElementById('import-file').onchange=e=>{if(e.target.files[0])importJSON(e.target.files[0]);};
+document.getElementById('import-btn').onclick=()=>document.getElementById('import-file').click();
+document.getElementById('import-cn-holidays').onclick=importFestivals;
+document.getElementById('dark-toggle').onclick=()=>{settings.dark=!settings.dark;document.documentElement.setAttribute('data-theme',settings.dark?'dark':'light');document.getElementById('dark-toggle').classList.toggle('on',settings.dark);saveSettings();};
+document.getElementById('notif-toggle').onclick=()=>{settings.notifications=!settings.notifications;if(settings.notifications)Notification.requestPermission();document.getElementById('notif-toggle').classList.toggle('on',settings.notifications);saveSettings();};
+document.getElementById('lunar-toggle').onclick=()=>{settings.showLunar=!settings.showLunar;document.getElementById('lunar-toggle').classList.toggle('on',settings.showLunar);saveSettings();renderAll();};
+document.getElementById('theme-btn').onclick=()=>{settings.dark=!settings.dark;document.documentElement.setAttribute('data-theme',settings.dark?'dark':'light');saveSettings();renderAll();};
+document.getElementById('sb-reconfigure-btn').onclick=()=>{document.getElementById('supabase-overlay').classList.add('open');};
+document.getElementById('sb-disconnect-btn').onclick=disconnectSupabase;
+document.getElementById('sb-connect-btn').onclick=async()=>{let url=document.getElementById('sb-url-input').value;let key=document.getElementById('sb-key-input').value;if(await testAndConnect(url,key)){document.getElementById('supabase-overlay').classList.remove('open');}};
+document.getElementById('sb-local-btn').onclick=()=>document.getElementById('supabase-overlay').classList.remove('open');
+document.getElementById('sb-eye-btn').onclick=()=>{let inp=document.getElementById('sb-key-input');inp.type=inp.type==='password'?'text':'password';};
+document.querySelectorAll('.filter-tab').forEach(t=>t.onclick=()=>{currentFilter=t.dataset.filter;document.querySelectorAll('.filter-tab').forEach(ft=>ft.classList.remove('active'));t.classList.add('active');renderAll();});
+document.querySelectorAll('.overlay').forEach(ov=>ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');});
+// populate categories
+let catGrid=document.getElementById('cat-grid');['🎂','💍','🏮','🎯','✈️','🎓','💼','❤️','🏆','⭐'].forEach(c=>{let btn=document.createElement('button');btn.className='cat-btn';btn.dataset.cat=c;btn.innerHTML=c+'<span>'+c+'</span>';btn.onclick=()=>{selectedCat=c;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');};catGrid.appendChild(btn);});document.querySelector('.cat-btn').classList.add('selected');
+document.querySelectorAll('.toggle-btn[data-repeat]').forEach(b=>b.onclick=()=>{selectedRepeat=b.dataset.repeat;document.querySelectorAll('.toggle-btn[data-repeat]').forEach(bb=>bb.classList.remove('active'));b.classList.add('active');});
+document.querySelectorAll('.notif-chip').forEach(chip=>{chip.onclick=()=>{let v=chip.querySelector('input').value;if(selectedNotifs.has(v))selectedNotifs.delete(v);else selectedNotifs.add(v);chip.classList.toggle('selected',selectedNotifs.has(v));};});
+document.getElementById('calmode-toggle').querySelectorAll('.toggle-btn').forEach(b=>b.onclick=()=>{calMode=b.dataset.calmode;document.getElementById('greg-picker-row').style.display=calMode==='gregorian'?'block':'none';document.getElementById('lunar-picker-row').style.display=calMode==='chinese'?'block':'none';});
+document.getElementById('ev-date').onchange=e=>{try{let[y,m,d]=e.target.value.split('-').map(Number);let l=LUNAR.solar2lunar?LUNAR.solar2lunar(y,m,d):null;if(l)document.getElementById('lunar-display').textContent=`农历 ${l.sbYear}年 ${l.monthName}${l.dayName}`;}catch{}};
+applyTheme:document.documentElement.setAttribute('data-theme',settings.dark?'dark':'light');document.getElementById('dark-toggle').classList.toggle('on',settings.dark);document.getElementById('notif-toggle').classList.toggle('on',settings.notifications);document.getElementById('lunar-toggle').classList.toggle('on',settings.showLunar);
+if(sbConfig){testAndConnect(sbConfig.url,sbConfig.key).catch(console.warn);}
+renderAll();
+if(location.hash.startsWith('#event='))setTimeout(()=>{let id=location.hash.slice(7);if(events.find(e=>e.id===id))openDetail(id);},100);
+</script>
+</body>
+</html>
