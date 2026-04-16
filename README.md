@@ -16,7 +16,7 @@ A personal mobile Event Countdown (ChronoLuna) that syncs to a Supabase database
 
 ---
 
-### Step 2 — Create the Expenses Table
+### Step 2 — Create the Event Table
 
 1. On the left navigation, redirect to **SQL Editor**
 2. **Paste** the following SQL query and run it to create the **Events Table**
@@ -49,14 +49,14 @@ A personal mobile Event Countdown (ChronoLuna) that syncs to a Supabase database
    #SQL Query
    
    CREATE POLICY "Enable insert for anon and authenticated"
-   on "public"."expenses"
+   on "public"."events"
    to public
    with check (
      (auth.role() = ANY (ARRAY['anon'::text, 'authenticated'::text]))
    );
 
    CREATE POLICY "Enable delete for anon and authenticated"
-   ON "public"."expenses"
+   ON "public"."events"
    FOR DELETE
    TO public
    USING (
