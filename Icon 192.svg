@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f5e6c8"/>
+      <stop offset="100%" stop-color="#fdf6e9"/>
+    </radialGradient>
+    <radialGradient id="body" cx="50%" cy="38%" r="58%">
+      <stop offset="0%" stop-color="#f5a623"/>
+      <stop offset="60%" stop-color="#e07020"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle (maskable safe zone) -->
+  <circle cx="96" cy="96" r="96" fill="url(#bg)"/>
+
+  <!-- Outer glow -->
+  <ellipse cx="96" cy="112" rx="52" ry="58" fill="#c0392b" opacity="0.15" filter="url(#glow)"/>
+
+  <!-- Hanging string -->
+  <rect x="92" y="14" width="8" height="22" rx="4" fill="#c9a84c"/>
+
+  <!-- Top cap -->
+  <ellipse cx="96" cy="38" rx="30" ry="10" fill="#c9a84c"/>
+  <ellipse cx="96" cy="36" rx="26" ry="7" fill="#e8c060"/>
+
+  <!-- Lantern body -->
+  <ellipse cx="96" cy="105" rx="46" ry="60" fill="url(#body)"/>
+
+  <!-- Ribs (vertical curves giving 3D feel) -->
+  <ellipse cx="96" cy="105" rx="30" ry="60" fill="none" stroke="#c9a84c" stroke-width="2.5" opacity="0.45"/>
+  <ellipse cx="96" cy="105" rx="14" ry="60" fill="none" stroke="#c9a84c" stroke-width="1.8" opacity="0.3"/>
+
+  <!-- Horizontal bands -->
+  <path d="M52 82 Q96 76 140 82" fill="none" stroke="#c9a84c" stroke-width="1.8" opacity="0.5"/>
+  <path d="M50 105 Q96 99 142 105" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.55"/>
+  <path d="M52 128 Q96 134 140 128" fill="none" stroke="#c9a84c" stroke-width="1.8" opacity="0.5"/>
+
+  <!-- Inner glow highlight -->
+  <ellipse cx="82" cy="90" rx="14" ry="22" fill="#fff" opacity="0.12"/>
+
+  <!-- 福 character -->
+  <text x="96" y="116" text-anchor="middle" font-family="serif" font-size="38" font-weight="bold" fill="#fef0c0" opacity="0.92">福</text>
+
+  <!-- Bottom cap -->
+  <ellipse cx="96" cy="166" rx="30" ry="10" fill="#c9a84c"/>
+  <ellipse cx="96" cy="168" rx="26" ry="7" fill="#e8c060"/>
+
+  <!-- Tassel base -->
+  <rect x="88" y="174" width="16" height="8" rx="4" fill="#c9a84c"/>
+
+  <!-- Tassel strands -->
+  <line x1="88" y1="182" x2="84" y2="192" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="92" y1="182" x2="91" y2="192" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="96" y1="182" x2="96" y2="192" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="100" y1="182" x2="101" y2="192" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="104" y1="182" x2="108" y2="192" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
