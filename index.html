@@ -500,12 +500,7 @@ textarea { resize: vertical; min-height: 70px; }
   margin: 20px 0 18px; color: var(--muted); font-size: 0.78rem;
 }
 .sb-divider::before, .sb-divider::after { content: ''; flex: 1; height: 1px; background: var(--gold); opacity: 0.4; }
-.sb-info-box {
-  background: var(--paper2); border-radius: 12px; padding: 12px 14px;
-  font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px;
-}
-.sb-info-box a { color: var(--sky); text-decoration: none; }
-.sb-info-box a:hover { text-decoration: underline; }
+
 .sb-input-wrap { position: relative; margin-bottom: 14px; }
 .sb-input-wrap label { display: block; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
 .sb-input-wrap input {
@@ -851,29 +846,6 @@ select option[data-leap] { font-style: italic; color: var(--jade); }
       <span class="sb-logo-icon">🏮</span>
       <div class="sb-logo-title">ChronoLuna</div>
       <div class="sb-logo-sub">Event Countdown</div>
-    </div>
-
-    <div class="sb-info-box">
-      <strong>Step 1 — Create your table</strong><br/>
-      In <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a> → SQL Editor, run:<br/>
-      <div style="position:relative;margin-top:6px">
-        <code id="sb-sql-block" style="font-size:.72rem;display:block;background:rgba(0,0,0,.1);padding:8px;border-radius:6px;white-space:pre;overflow-x:auto;color:inherit">CREATE TABLE IF NOT EXISTS events (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  date TEXT NOT NULL,
-  category TEXT DEFAULT '⭐',
-  repeat TEXT DEFAULT 'none',
-  cal_type TEXT DEFAULT 'gregorian',
-  lunar_meta TEXT,
-  notes TEXT,
-  notifs TEXT,
-  color TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);</code>
-        <button onclick="navigator.clipboard.writeText(document.getElementById('sb-sql-block').textContent).then(()=>this.textContent='Copied!').catch(()=>{}); this.textContent='Copied ✓'; setTimeout(()=>this.textContent='Copy SQL',1500)"
-          style="position:absolute;top:4px;right:4px;padding:3px 8px;font-size:.68rem;border:1px solid var(--gold);border-radius:4px;background:var(--paper);cursor:pointer;color:var(--ink)">Copy SQL</button>
-      </div>
-      <strong>Step 2</strong> — Get your URL &amp; anon key: Dashboard → Project Settings → API
     </div>
 
     <div class="sb-divider">Connect to Supabase</div>
