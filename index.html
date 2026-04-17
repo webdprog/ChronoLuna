@@ -2282,7 +2282,7 @@ function showInstallBanner() {
   if (existing) return;
   const banner = document.createElement('div');
   banner.id = 'install-banner';
-  banner.innerHTML = \`
+  banner.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
       <span style="font-size:1.4rem;flex-shrink:0">🏮</span>
       <div style="min-width:0">
@@ -2292,15 +2292,15 @@ function showInstallBanner() {
     </div>
     <button id="install-yes-btn" style="flex-shrink:0;padding:8px 16px;background:#fff;color:#c0392b;border:none;border-radius:20px;font-weight:600;font-size:.85rem;cursor:pointer">Install</button>
     <button id="install-no-btn" style="flex-shrink:0;padding:8px;background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;opacity:.8">✕</button>
-  \`;
-  banner.style.cssText = \`
+  `;
+  banner.style.cssText = `
     position:fixed;bottom:0;left:0;right:0;
     background:linear-gradient(135deg,#c0392b,#8b1a10);
     color:#fff;padding:14px 16px;
     display:flex;align-items:center;gap:10px;
     z-index:800;box-shadow:0 -4px 20px rgba(0,0,0,.3);
     animation:slideUp .35s ease;
-  \`;
+  `;
   document.body.appendChild(banner);
 
   document.getElementById('install-yes-btn').onclick = async () => {
