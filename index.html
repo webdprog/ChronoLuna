@@ -2324,9 +2324,9 @@ function hideInstallBanner() {
 
 // Add animation keyframe for banner
 const swStyle = document.createElement('style');
-swStyle.textContent = \`
+swStyle.textContent = `
   @keyframes slideUp { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
-\`;
+`;
 document.head.appendChild(swStyle);
 
 // ── iOS: show manual install instructions (iOS doesn't support beforeinstallprompt) ──
@@ -2342,7 +2342,7 @@ if (isIOS && !isInStandaloneMode && !dismissedRecently) {
   setTimeout(() => {
     const banner = document.createElement('div');
     banner.id = 'ios-install-banner';
-    banner.innerHTML = \`
+    banner.innerHTML = `
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:1.5rem;flex-shrink:0">🏮</span>
         <div style="flex:1">
@@ -2356,15 +2356,15 @@ if (isIOS && !isInStandaloneMode && !dismissedRecently) {
         <button id="ios-install-close" style="flex-shrink:0;padding:4px 8px;background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;opacity:.8">✕</button>
       </div>
       <div style="margin-top:10px;text-align:center;font-size:1.4rem;letter-spacing:4px;opacity:.7">↓ &nbsp; ↓ &nbsp; ↓</div>
-    \`;
-    banner.style.cssText = \`
+    `;
+    banner.style.cssText = `
       position:fixed;bottom:0;left:0;right:0;
       background:linear-gradient(135deg,#c0392b,#8b1a10);
       color:#fff;padding:16px;
       z-index:800;box-shadow:0 -4px 20px rgba(0,0,0,.3);
       animation:slideUp .35s ease;
       padding-bottom:max(16px,env(safe-area-inset-bottom));
-    \`;
+    `;
     document.body.appendChild(banner);
     document.getElementById('ios-install-close').onclick = () => {
       banner.remove();
